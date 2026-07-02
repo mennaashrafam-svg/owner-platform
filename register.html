@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>إنشاء حساب - Owner Platform</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f172a;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .box {
+      background: #1e293b;
+      padding: 40px;
+      border-radius: 16px;
+      width: 100%;
+      max-width: 400px;
+    }
+    h1 { font-size: 24px; margin-bottom: 8px; }
+    p { color: #94a3b8; margin-bottom: 32px; font-size: 14px; }
+    label { display: block; margin-bottom: 8px; font-size: 14px; color: #cbd5e1; }
+    input {
+      width: 100%;
+      padding: 12px 16px;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #3b82f6;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-bottom: 12px;
+    }
+    button:hover { background: #2563eb; }
+    .error { color: #f87171; font-size: 14px; margin-bottom: 16px; display: none; }
+    .success { color: #4ade80; font-size: 14px; margin-bottom: 16px; display: none; }
+    a { color: #94a3b8; font-size: 14px; text-decoration: none; }
+    a:hover { color: #fff; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h1>Owner Platform</h1>
+    <p>إنشاء حساب جديد</p>
+    <div class="error" id="error">حصل خطأ، حاول تاني</div>
+    <div class="success" id="success">تم إنشاء الحساب! جاري التحويل...</div>
+    <label>الاسم</label>
+    <input type="text" id="name" placeholder="اسمك">
+    <label>البريد الإلكتروني</label>
+    <input type="email" id="email" placeholder="example@email.com">
+    <label>كلمة السر</label>
+    <input type="password" id="password" placeholder="••••••••">
+    <button onclick="register()">إنشاء حساب</button>
+    <a href="/login.html">عندك حساب؟ سجل دخول</a>
+  </div>
+  <script>
+    const API = "https://my-server-production-0e71.up.railway.app";
+
+    if (localStorage.getItem("token")) {
+      window.location.href = "/index.html";
+    }
+
+    async function register() {
+      const name = document.getElementById("name").value;
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      try {
+        const res = await fetch(`${API}/api/register`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, email, password })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message);
+        document.getElementById("success").style.display = "block";
+        setTimeout(() => {
+          window.location.href = "/login.html";
+        }, 2000);
+      } catch (err) {
+        document.getElementById("error").innerText = err.message;
+        document.getElementById("error").style.display = "block";
+      }
+    }
+  </script>
+</body>
+</html>
