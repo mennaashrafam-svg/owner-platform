@@ -2143,7 +2143,7 @@ async function loadRealConversations() {
     console.error("خطأ في جلب البيانات:", err);
   }
 }
-loadRealConversations();
+window.loadRealConversations = loadRealConversations;
 bootstrapApp();
 
 },
