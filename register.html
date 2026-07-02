@@ -66,13 +66,13 @@
     <label>كلمة السر</label>
     <input type="password" id="password" placeholder="••••••••">
     <button onclick="register()">إنشاء حساب</button>
-    <a href="/login.html">عندك حساب؟ سجل دخول</a>
+    <a href="/owner-platform/login.html">عندك حساب؟ سجل دخول</a>
   </div>
   <script>
     const API = "https://my-server-production-0e71.up.railway.app";
 
     if (localStorage.getItem("token")) {
-      window.location.href = "/index.html";
+      window.location.href = "/owner-platform/index.html";
     }
 
     async function register() {
@@ -89,7 +89,7 @@
         if (!res.ok) throw new Error(data.message);
         document.getElementById("success").style.display = "block";
         setTimeout(() => {
-          window.location.href = "/login.html";
+          window.location.href = "/owner-platform/login.html";
         }, 2000);
       } catch (err) {
         document.getElementById("error").innerText = err.message;
