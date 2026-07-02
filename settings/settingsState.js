@@ -1,0 +1,20 @@
+export const createInitialAppState = (data) => ({
+  language: "en",
+  view: "dashboard",
+  theme: "light",
+  selectedConversationId: data.conversations[0]?.id,
+  dateRange: { from: "2026-05-01", to: "2026-05-27" },
+  agentOverrides: {},
+  searchQuery: "",
+  bookingDrill: {
+    metricKey: "confirmedBookings",
+    platformId: null,
+    sourceId: null,
+    contentId: null,
+    agentId: null,
+    bookingId: null,
+    reportTab: "analysis",
+    contextIds: null,
+    contextLabel: null,
+  },
+});

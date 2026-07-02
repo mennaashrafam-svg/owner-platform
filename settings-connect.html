@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ربط المنصات - Owner Platform</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f172a;
+      color: #fff;
+      padding: 40px 20px;
+    }
+    h1 { font-size: 24px; margin-bottom: 8px; }
+    p { color: #94a3b8; margin-bottom: 32px; }
+    .card {
+      background: #1e293b;
+      padding: 24px;
+      border-radius: 12px;
+      margin-bottom: 16px;
+    }
+    .card h2 { font-size: 18px; margin-bottom: 8px; }
+    .card p { font-size: 14px; margin-bottom: 16px; }
+    input {
+      width: 100%;
+      padding: 10px 14px;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+    button {
+      padding: 10px 20px;
+      background: #3b82f6;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .success { color: #4ade80; font-size: 14px; margin-top: 8px; display: none; }
+  </style>
+</head>
+<body>
+  <h1>ربط المنصات</h1>
+  <p>اربط منصاتك عشان المحادثات تيجي أوتوماتيك للداشبورد</p>
+
+  <div class="card">
+    <h2>واتساب Business</h2>
+    <p>ادخل بيانات واتساب Business بتاعك</p>
+    <input type="text" id="wa-token" placeholder="WhatsApp Access Token">
+    <input type="text" id="wa-phone" placeholder="Phone Number ID">
+    <button onclick="saveWhatsapp()">ربط واتساب</button>
+    <div class="success" id="wa-success">تم الربط بنجاح!</div>
+  </div>
+
+  <div class="card">
+    <h2>إنستجرام</h2>
+    <p>ادخل بيانات إنستجرام بتاعك</p>
+    <input type="text" id="ig-token" placeholder="Instagram Access Token">
+    <input type="text" id="ig-id" placeholder="Instagram Account ID">
+    <button onclick="saveInstagram()">ربط إنستجرام</button>
+    <div class="success" id="ig-success">تم الربط بنجاح!</div>
+  </div>
+
+  <div class="card">
+    <h2>فيسبوك</h2>
+    <p>ادخل بيانات فيسبوك بتاعك</p>
+    <input type="text" id="fb-token" placeholder="Facebook Access Token">
+    <input type="text" id="fb-id" placeholder="Page ID">
+    <button onclick="saveFacebook()">ربط فيسبوك</button>
+    <div class="success" id="fb-success">تم الربط بنجاح!</div>
+  </div>
+
+  <script>
+    const API = "https://my-server-production-0e71.up.railway.app";
+    const token = localStorage.getItem("token");
+
+    if (!token) window.location.href = "/login.html";
+
+    async function savePlatform(platform, data) {
+      const res = await fetch(`${API}/api/settings/platforms`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ platform, ...data })
+      });
+      return res.ok;
+    }
+
+    async function saveWhatsapp() {
+      const ok = await savePlatform("whatsapp", {
+        token: document.getElementById("wa-token").value,
+        phoneId: document.getElementById("wa-phone").value
+      });
+      if (ok) document.getElementById("wa-success").style.display = "block";
+    }
+
+    async function saveInstagram() {
+      const ok = await savePlatform("instagram", {
+        token: document.getElementById("ig-token").value,
+        accountId: document.getElementById("ig-id").value
+      });
+      if (ok) document.getElementById("ig-success").style.display = "block";
+    }
+
+    async function saveFacebook() {
+      const ok = await savePlatform("facebook", {
+        token: document.getElementById("fb-token").value,
+        pageId: document.getElementById("fb-id").value
+      });
+      if (ok) document.getElementById("fb-success").style.display = "block";
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Owner Platform by Smart INV</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-error-banner" id="app-error-banner" role="alert" hidden></div>
+
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Primary">
+        <div class="brand-lockup">
+          <div class="brand-mark" aria-hidden="true">SI</div>
+          <div>
+            <p class="eyebrow" data-i18n="brand.owner">Owner Platform</p>
+            <h1>Smart INV</h1>
+          </div>
+        </div>
+
+        <nav class="nav-list" aria-label="Sections">
+          <button class="nav-item active" data-view="dashboard">
+            <span class="nav-icon" aria-hidden="true">◆</span>
+            <span data-i18n="nav.dashboard">Dashboard</span>
+          </button>
+          <button class="nav-item" data-view="analysis">
+            <span class="nav-icon" aria-hidden="true">◈</span>
+            <span data-i18n="nav.analysis">Conversation Analysis</span>
+          </button>
+          <button class="nav-item" data-view="analyze-file">
+            <span class="nav-icon" aria-hidden="true">◇</span>
+            <span data-i18n="nav.analyzeFile">Analyze File</span>
+          </button>
+          <button class="nav-item" data-view="settings">
+            <span class="nav-icon" aria-hidden="true">◌</span>
+            <span data-i18n="nav.settings">Settings</span>
+          </button>
+        </nav>
+
+        <div class="sidebar-status">
+          <span class="status-pulse" aria-hidden="true"></span>
+          <span data-i18n="status.live">Platform monitoring live</span>
+        </div>
+      </aside>
+
+      <main class="main-panel">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow" data-i18n="header.eyebrow">Executive Intelligence Command Center</p>
+            <h2 id="page-title" data-i18n="header.dashboardTitle">Business Conversation Intelligence</h2>
+          </div>
+
+          <div class="topbar-controls">
+            <div class="date-filter" aria-label="Date range">
+              <label>
+                <span data-i18n="filters.from">From</span>
+                <input id="date-from" type="date" />
+              </label>
+              <label>
+                <span data-i18n="filters.to">To</span>
+                <input id="date-to" type="date" />
+              </label>
+            </div>
+
+            <div class="topbar-actions" role="group" aria-label="Language">
+              <button class="language-toggle active" data-lang="en" type="button">EN</button>
+              <button class="language-toggle" data-lang="ar" type="button">عربي</button>
+            </div>
+
+            <div class="topbar-actions theme-switcher" role="group" aria-label="Theme">
+              <button class="language-toggle active" data-theme="light" type="button" data-i18n="theme.light">Light</button>
+              <button class="language-toggle" data-theme="dark" type="button" data-i18n="theme.dark">Dark</button>
+              <button class="language-toggle" data-theme="auto" type="button" data-i18n="theme.auto">Auto</button>
+            </div>
+          </div>
+        </header>
+
+        <section class="global-search glass-panel" aria-label="Universal intelligence search">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow" data-i18n="search.eyebrow">Universal Search</p>
+              <h3 data-i18n="search.title">Find any conversation, agent, source, objection, or recommendation</h3>
+            </div>
+          </div>
+          <label class="search-box">
+            <span data-i18n="search.label">Search intelligence</span>
+            <input id="global-search" type="search" autocomplete="off" data-i18n-placeholder="search.placeholder" placeholder="Search price, غالي, client ID, campaign, employee..." />
+          </label>
+          <div id="search-results" class="search-results" aria-live="polite"></div>
+        </section>
+
+        <section id="dashboard-view" class="view active" aria-labelledby="page-title">
+          <section class="executive-home" aria-label="Executive home screen">
+            <div class="executive-health glass-panel">
+              <div>
+                <p class="eyebrow" data-i18n="home.health">Business Health</p>
+                <h3 id="home-health-score">—</h3>
+                <p class="health-explanation" data-i18n="home.healthExplanation">Based on bookings, CNC, missed opportunities, employee performance and conversation quality.</p>
+                <span id="home-health-status" class="health-status">—</span>
+              </div>
+            </div>
+
+            <button class="executive-card executive-card-button executive-problem" data-problem-report type="button" aria-haspopup="dialog" aria-controls="booking-breakdown-modal">
+              <span data-i18n="home.biggestProblem">Biggest Problem</span>
+              <strong id="home-biggest-problem">—</strong>
+              <small data-i18n="home.openProblem">Open related report</small>
+            </button>
+
+            <button class="executive-card executive-card-button" data-best-employee-report type="button" aria-haspopup="dialog" aria-controls="booking-breakdown-modal">
+              <span data-i18n="home.bestEmployee">Best Employee</span>
+              <strong id="home-best-employee">—</strong>
+              <small data-i18n="home.openEmployee">Open employee report</small>
+            </button>
+
+            <div class="executive-card executive-ask">
+              <span data-i18n="home.askPlatform">Ask Platform</span>
+              <input id="ask-platform-input" type="text" data-i18n-placeholder="home.askPlaceholder" placeholder="Ask about bookings, CNC, risks, or performance..." />
+              <small id="ask-platform-answer"></small>
+            </div>
+
+          </section>
+
+          <div class="command-cockpit home-secondary">
+            <div class="hero-strip">
+              <div>
+                <p class="eyebrow" id="dashboard-period-label">—</p>
+                <h3 data-i18n="dashboard.heroTitle">Every customer conversation, scored for revenue and performance.</h3>
+              </div>
+              <div class="hero-score" aria-label="Overall performance score">
+                <span id="overall-score">—</span>
+                <small data-i18n="dashboard.overallScore">Performance Score</small>
+              </div>
+            </div>
+
+            <section class="metric-grid" aria-label="Business metrics">
+              <button
+                class="metric-card metric-card-button metric-card-primary"
+                data-booking-breakdown
+                data-intelligence-metric="confirmedBookings"
+                type="button"
+                aria-haspopup="dialog"
+                aria-controls="booking-breakdown-modal"
+              >
+                <span class="metric-label" data-i18n="metrics.confirmedBookings">Confirmed Bookings</span>
+                <strong id="metric-confirmed-bookings">—</strong>
+                <span class="metric-trend positive" data-i18n="metrics.confirmedTrend">Tap to view source breakdown</span>
+              </button>
+              <button class="metric-card metric-card-button" data-intelligence-metric="analyzedConversations" type="button" aria-haspopup="dialog" aria-controls="booking-breakdown-modal">
+                <span class="metric-label" data-i18n="metrics.conversations">Analyzed conversations</span>
+                <strong id="metric-conversations">—</strong>
+                <span class="metric-trend positive" data-i18n="metrics.conversationsTrend">+18% vs last week</span>
+              </button>
+              <button class="metric-card metric-card-button" data-intelligence-metric="missedOpportunities" type="button" aria-haspopup="dialog" aria-controls="booking-breakdown-modal">
+                <span class="metric-label" data-i18n="metrics.missed">Missed opportunities</span>
+                <strong id="metric-missed">—</strong>
+                <span class="metric-trend warning" data-i18n="metrics.missedTrend">AED 92k at risk</span>
+              </button>
+              <button class="metric-card metric-card-button" data-intelligence-metric="averageQuality" type="button" aria-haspopup="dialog" aria-controls="booking-breakdown-modal">
+                <span class="metric-label" data-i18n="metrics.response">Avg response quality</span>
+                <strong id="metric-quality">—</strong>
+                <span class="metric-trend positive" data-i18n="metrics.responseTrend">High empathy signals</span>
+              </button>
+              <button class="metric-card metric-card-button metric-card-recommendation" data-intelligence-metric="aiRecommendations" type="button" aria-haspopup="dialog" aria-controls="booking-breakdown-modal">
+                <span class="metric-label" data-i18n="metrics.aiRecommendations">Platform Recommendations</span>
+                <strong id="metric-recommendations">—</strong>
+                <span class="metric-trend positive" data-i18n="metrics.aiRecommendationsTrend">Open all recommendations</span>
+              </button>
+              <button class="metric-card metric-card-button" data-intelligence-metric="platformPerformance" type="button" aria-haspopup="dialog" aria-controls="booking-breakdown-modal">
+                <span class="metric-label" data-i18n="metrics.platformPerformance">Platform Performance</span>
+                <strong id="metric-platform-performance">—</strong>
+                <span class="metric-trend positive" data-i18n="metrics.platformPerformanceTrend">Weighted by source quality</span>
+              </button>
+              <button class="metric-card metric-card-button" data-intelligence-metric="agentPerformance" type="button" aria-haspopup="dialog" aria-controls="booking-breakdown-modal">
+                <span class="metric-label" data-i18n="metrics.agentPerformance">Agent Performance</span>
+                <strong id="metric-agent-performance">—</strong>
+                <span class="metric-trend positive" data-i18n="metrics.agentPerformanceTrend">Trace performance by employee</span>
+              </button>
+              <button class="metric-card metric-card-button" data-intelligence-metric="revenueInsights" type="button" aria-haspopup="dialog" aria-controls="booking-breakdown-modal" data-i18n-title="metrics.revenueTooltip">
+                <span class="metric-label" data-i18n="metrics.revenueInsights">Estimated Revenue</span>
+                <strong id="metric-revenue">—</strong>
+                <span class="metric-trend positive" data-i18n="metrics.revenueTrend">Tracked to campaign source</span>
+              </button>
+            </section>
+          </div>
+
+          <div class="dashboard-grid home-secondary">
+            <section class="glass-panel">
+              <div class="section-heading">
+                <div>
+                  <p class="eyebrow" data-i18n="alerts.eyebrow">Platform Alerts</p>
+                  <h3 data-i18n="alerts.title">Owner-level intelligence alerts</h3>
+                </div>
+                <span class="chip" data-i18n="alerts.priorityOnly">Priority only</span>
+              </div>
+
+              <div class="alert-list" id="intelligence-alerts"></div>
+            </section>
+
+            <section class="glass-panel">
+              <div class="section-heading">
+                <div>
+                  <p class="eyebrow" data-i18n="dashboard.performance">Performance</p>
+                  <h3 data-i18n="dashboard.scoreByChannel">Performance score by channel</h3>
+                </div>
+              </div>
+
+              <div class="channel-bars" id="channel-bars"></div>
+            </section>
+
+            <section class="glass-panel">
+              <div class="section-heading">
+                <div>
+                  <p class="eyebrow" data-i18n="dashboard.risk">Risk</p>
+                  <h3 data-i18n="dashboard.opportunityTitle">Business Risk Center</h3>
+                </div>
+              </div>
+
+              <div class="radar-stack" id="radar-stack"></div>
+            </section>
+          </div>
+
+          <section class="glass-panel agent-panel home-secondary">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow" data-i18n="agents.eyebrow">Agent Intelligence</p>
+                <h3 data-i18n="agents.title">Employee performance by conversation outcome</h3>
+              </div>
+              <span class="chip" data-i18n="agents.autoDetected">Auto-detected from conversation tags</span>
+            </div>
+            <div id="agent-intelligence" class="agent-grid"></div>
+          </section>
+
+          <section class="glass-panel home-secondary">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow" data-i18n="dashboard.recent">Recent</p>
+                <h3 data-i18n="dashboard.priorityConversations">Priority conversations</h3>
+              </div>
+              <button class="text-button" data-jump-analysis type="button" data-i18n="dashboard.openAnalysis">
+                Open analysis
+              </button>
+            </div>
+            <div class="conversation-list" id="priority-list"></div>
+          </section>
+        </section>
+
+        <section id="analysis-view" class="view" aria-labelledby="analysis-title">
+          <div class="analysis-layout">
+            <section class="glass-panel conversation-browser">
+              <div class="section-heading">
+                <div>
+                  <p class="eyebrow" data-i18n="analysis.queue">Queue</p>
+                  <h3 id="analysis-title" data-i18n="analysis.title">Conversation Analysis</h3>
+                </div>
+                <span class="chip" id="conversation-count">—</span>
+              </div>
+
+              <div class="conversation-tabs" id="conversation-tabs" role="tablist"></div>
+            </section>
+
+            <section class="glass-panel insight-panel" id="conversation-detail">
+              <div class="empty-state" data-i18n="analysis.loading">Loading intelligence...</div>
+            </section>
+          </div>
+        </section>
+
+        <section id="analyze-file-view" class="view" aria-labelledby="page-title">
+          <section class="glass-panel file-analysis-panel">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow" data-i18n="nav.analyzeFile">Analyze File</p>
+                <h3 data-i18n="file.title">Test analytics before platform integrations</h3>
+                <p data-i18n="file.description">Uploaded test files remain separate from live platform data.</p>
+              </div>
+            </div>
+            <label class="file-upload">
+              <span data-i18n="file.choose">Choose test file</span>
+              <input id="analysis-file-input" type="file" accept=".txt,.pdf,.docx,.csv,.eml,.mbox,.zip" />
+              <small data-i18n="file.supported">TXT, PDF, DOCX, CSV, email exports, and WhatsApp exports</small>
+            </label>
+            <div id="file-analysis-results" class="report-grid">
+              <div class="empty-state" data-i18n="file.empty">Choose a file to generate a test analysis.</div>
+            </div>
+          </section>
+        </section>
+
+        <section id="settings-view" class="view" aria-labelledby="page-title">
+          <div id="settings-panel" class="settings-layout"></div>
+        </section>
+      </main>
+
+      <aside class="platform-sidebar" aria-label="Platform intelligence">
+        <p class="eyebrow" data-i18n="platforms.title">Platforms</p>
+        <div id="platform-nav" class="platform-nav"></div>
+      </aside>
+    </div>
+
+    <div class="modal-backdrop" id="booking-breakdown-modal" role="dialog" aria-modal="true" aria-labelledby="booking-breakdown-title" hidden>
+      <section class="breakdown-modal">
+        <div class="modal-heading">
+          <div>
+            <p class="eyebrow" data-i18n="bookings.attribution">Source Attribution</p>
+            <h3 id="booking-breakdown-title" data-i18n="bookings.title">Confirmed Bookings</h3>
+          </div>
+          <button class="icon-button" data-close-booking-modal type="button" aria-label="Close">×</button>
+        </div>
+
+        <div class="booking-total">
+          <span data-i18n="bookings.confirmedTotal">Confirmed bookings</span>
+          <strong id="booking-modal-total">—</strong>
+        </div>
+
+        <div class="journey-toolbar" id="booking-journey-toolbar"></div>
+
+        <div class="booking-breakdown-list" id="booking-breakdown-list"></div>
+      </section>
+    </div>
+
+    <div class="modal-backdrop" id="file-analysis-modal" role="dialog" aria-modal="true" aria-labelledby="file-analysis-modal-title" hidden>
+      <section class="breakdown-modal">
+        <div class="modal-heading">
+          <div>
+            <p class="eyebrow" data-i18n="nav.analyzeFile">Analyze File</p>
+            <h3 id="file-analysis-modal-title" data-i18n="file.evidence">Analysis Evidence</h3>
+          </div>
+          <button class="icon-button" data-close-file-modal type="button" aria-label="Close">×</button>
+        </div>
+        <div id="file-analysis-modal-content" class="booking-breakdown-list"></div>
+      </section>
+    </div>
+
+    <script src="app.bundle.js"></script>
+  </body>
+</html>
