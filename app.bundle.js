@@ -2125,7 +2125,25 @@ window.OwnerPlatform = {
   loadPlatformDataFromApi,
   refreshDashboard: () => renderDashboard(),
 };
-
+// جيب البيانات الحقيقية من السيرفر لو فيه token
+async function loadRealConversations() {
+  const token = localStorage.getItem("token");
+  if (!token) return;
+  try {
+    const res = await fetch("https://my-server-production-0e71.up.railway.app/api/conversations", {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!res.ok) return;
+    const conversations = await res.json();
+    if (conversations.length > 0) {
+      console.log("بيانات حقيقية من السيرفر:", conversations);
+      // هنا هنضيف الكود عشان يعرضها في الداشبورد
+    }
+  } catch (err) {
+    console.error("خطأ في جلب البيانات:", err);
+  }
+}
+loadRealConversations();
 bootstrapApp();
 
 },
