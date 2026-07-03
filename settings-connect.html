@@ -64,6 +64,16 @@
       cursor: pointer;
     }
     .success { color: #4ade80; font-size: 14px; margin-top: 8px; display: none; }
+    .status-badge {
+      display: inline-block;
+      background: rgba(74, 222, 128, 0.12);
+      color: #4ade80;
+      border: 1px solid rgba(74, 222, 128, 0.35);
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      margin-bottom: 12px;
+    }
   </style>
 </head>
 <body>
@@ -78,6 +88,7 @@
   <div class="card">
     <h2>WhatsApp Business</h2>
     <p id="wa-desc">أدخل بيانات حساب واتساب بيزنس الخاص بك</p>
+    <div class="status-badge" id="wa-status" hidden></div>
     <input type="text" id="wa-token" placeholder="WhatsApp Access Token">
     <input type="text" id="wa-phone" placeholder="Phone Number ID">
     <button type="button" id="wa-btn" onclick="saveWhatsapp()">ربط واتساب</button>
@@ -87,6 +98,7 @@
   <div class="card">
     <h2 id="ig-title">إنستجرام</h2>
     <p id="ig-desc">أدخل بيانات حساب إنستجرام الخاص بك</p>
+    <div class="status-badge" id="ig-status" hidden></div>
     <input type="text" id="ig-token" placeholder="Instagram Access Token">
     <input type="text" id="ig-id" placeholder="Instagram Account ID">
     <button type="button" id="ig-btn" onclick="saveInstagram()">ربط إنستجرام</button>
@@ -96,6 +108,7 @@
   <div class="card">
     <h2 id="fb-title">فيسبوك</h2>
     <p id="fb-desc">أدخل بيانات حساب فيسبوك الخاص بك</p>
+    <div class="status-badge" id="fb-status" hidden></div>
     <input type="text" id="fb-token" placeholder="Facebook Access Token">
     <input type="text" id="fb-id" placeholder="Page ID">
     <button type="button" id="fb-btn" onclick="saveFacebook()">ربط فيسبوك</button>
@@ -122,6 +135,7 @@
         fbDesc: "أدخل بيانات حساب فيسبوك الخاص بك",
         fbBtn: "ربط فيسبوك",
         success: "تم الربط بنجاح!",
+        connectedPrefix: "متصل بالفعل",
       },
       en: {
         pageTitle: "Connect Platforms - Owner Platform",
@@ -136,6 +150,7 @@
         fbDesc: "Enter your Facebook account details",
         fbBtn: "Connect Facebook",
         success: "Connected successfully!",
+        connectedPrefix: "Already connected",
       },
     };
 
@@ -159,6 +174,7 @@
       document.getElementById("fb-success").textContent = t.success;
       document.getElementById("lang-ar").classList.toggle("active", lang === "ar");
       document.getElementById("lang-en").classList.toggle("active", lang === "en");
+      renderConnectionBadges();
     }
 
     function setLang(lang) {
@@ -166,7 +182,47 @@
       applyLang(lang);
     }
 
+    // يخفي جزء من رقم الحساب (زي واتساب أو الـ Page ID) قبل ما يعرضه، عشان الخصوصية
+    function maskAccountId(id) {
+      if (!id) return "";
+      const str = String(id);
+      if (str.length <= 4) return "****";
+      return `****${str.slice(-4)}`;
+    }
+
+    let connectedPlatforms = [];
+
+    function renderConnectionBadges() {
+      const lang = localStorage.getItem("authLang") || "ar";
+      const t = translations[lang];
+      const badgeIds = { whatsapp: "wa-status", instagram: "ig-status", facebook: "fb-status" };
+      Object.entries(badgeIds).forEach(([platform, elId]) => {
+        const el = document.getElementById(elId);
+        const connection = connectedPlatforms.find((p) => p.platform === platform);
+        if (connection) {
+          el.textContent = `${t.connectedPrefix}: ${maskAccountId(connection.account_id)}`;
+          el.hidden = false;
+        } else {
+          el.hidden = true;
+        }
+      });
+    }
+
+    async function loadConnectedPlatforms() {
+      try {
+        const res = await fetch(`${API}/api/settings/platforms`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) return;
+        connectedPlatforms = await res.json();
+        renderConnectionBadges();
+      } catch (err) {
+        console.error("تعذر جلب المنصات المرتبطة:", err);
+      }
+    }
+
     applyLang(localStorage.getItem("authLang") || "ar");
+    loadConnectedPlatforms();
 
     async function savePlatform(platform, data) {
       const res = await fetch(`${API}/api/settings/platforms`, {
@@ -185,7 +241,10 @@
         token: document.getElementById("wa-token").value,
         phoneId: document.getElementById("wa-phone").value
       });
-      if (ok) document.getElementById("wa-success").style.display = "block";
+      if (ok) {
+        document.getElementById("wa-success").style.display = "block";
+        loadConnectedPlatforms();
+      }
     }
 
     async function saveInstagram() {
@@ -193,7 +252,10 @@
         token: document.getElementById("ig-token").value,
         accountId: document.getElementById("ig-id").value
       });
-      if (ok) document.getElementById("ig-success").style.display = "block";
+      if (ok) {
+        document.getElementById("ig-success").style.display = "block";
+        loadConnectedPlatforms();
+      }
     }
 
     async function saveFacebook() {
@@ -201,7 +263,10 @@
         token: document.getElementById("fb-token").value,
         pageId: document.getElementById("fb-id").value
       });
-      if (ok) document.getElementById("fb-success").style.display = "block";
+      if (ok) {
+        document.getElementById("fb-success").style.display = "block";
+        loadConnectedPlatforms();
+      }
     }
   </script>
 </body>
