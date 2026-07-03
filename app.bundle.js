@@ -4222,56 +4222,167 @@ const looksBinary = (text) => {
   return nullCount > 5;
 };
 
-const extractDocxText = (buffer) => {
-  const raw = decodeUtf8(buffer);
-  const xmlMatches = [...raw.matchAll(/<w:t[^>]*>([^<]*)<\/w:t>/g)].map((match) => match[1].trim());
-  if (xmlMatches.length) return xmlMatches.filter(Boolean).join("\n");
-
-  const plainMatches = [...raw.matchAll(/[A-Za-z\u0600-\u06FF][A-Za-z0-9\u0600-\u06FF .,!?:;'"()-]{8,}/g)].map((match) => match[0].trim());
-  return plainMatches.length ? [...new Set(plainMatches)].join("\n") : "";
+// ---------------------------------------------------------------------------
+// فك الضغط باستخدام DecompressionStream المدمجة في المتصفح (بدون أي مكتبة خارجية).
+// مدعومة في كل المتصفحات الحديثة (Chrome 80+, Edge 80+, Firefox 113+, Safari 16.4+).
+// ---------------------------------------------------------------------------
+const inflateBytes = async (bytes, format) => {
+  // format: "deflate-raw" لملفات ZIP (بما فيها DOCX) أو "deflate" لتيارات PDF (صيغة zlib)
+  const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream(format));
+  const buf = await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
 };
 
-const extractPdfText = (buffer) => {
-  const raw = decodeLatin1(buffer);
-  const literalMatches = [...raw.matchAll(/\(([^\\)]*(?:\\.[^\\)]*)*)\)/g)]
-    .map((match) => match[1].replace(/\\([nrtbf()\\])/g, (_, token) => ({ n: "\n", r: "\r", t: "\t", b: "\b", f: "\f", "(": "(", ")": ")", "\\": "\\" }[token] || token)).trim())
-    .filter((line) => line.length > 2 && /[A-Za-z\u0600-\u06FF]/.test(line));
-
-  if (literalMatches.length) return [...new Set(literalMatches)].join("\n");
-
-  const streamMatches = [...raw.matchAll(/stream\r?\n([\s\S]*?)\r?\nendstream/g)]
-    .map((match) => match[1].replace(/[^\x20-\x7E\u0600-\u06FF\r\n]/g, " "))
-    .map((chunk) => chunk.trim())
-    .filter((chunk) => chunk.length > 20);
-
-  return streamMatches.length ? streamMatches.join("\n\n") : "";
-};
-
-const readZipEntryNames = (buffer) => {
+// ---------------------------------------------------------------------------
+// DOCX: قراءة حقيقية عن طريق فك ضغط word/document.xml من داخل بنية ZIP
+// ---------------------------------------------------------------------------
+const readZipEntries = (buffer) => {
   const view = new DataView(buffer);
-  const names = [];
+  const bytes = new Uint8Array(buffer);
+  const entries = [];
   let offset = 0;
 
-  while (offset + 30 < buffer.byteLength) {
+  while (offset + 30 <= buffer.byteLength) {
     const signature = view.getUint32(offset, true);
     if (signature !== 0x04034b50) break;
 
+    const method = view.getUint16(offset + 8, true);
     const compressedSize = view.getUint32(offset + 18, true);
+    const uncompressedSize = view.getUint32(offset + 22, true);
     const fileNameLength = view.getUint16(offset + 26, true);
     const extraLength = view.getUint16(offset + 28, true);
     const nameStart = offset + 30;
     const nameEnd = nameStart + fileNameLength;
     if (nameEnd > buffer.byteLength) break;
 
-    const entryName = decodeUtf8(buffer.slice(nameStart, nameEnd));
+    const entryName = decodeUtf8(bytes.slice(nameStart, nameEnd));
     const dataStart = nameEnd + extraLength;
     const dataEnd = dataStart + compressedSize;
-    names.push({ entryName, dataStart, dataEnd, compressedSize });
+    entries.push({ entryName, method, dataStart, dataEnd, compressedSize, uncompressedSize });
     offset = dataEnd;
   }
 
-  return names;
+  return entries;
 };
+
+const decodeXmlEntities = (text) =>
+  text
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'");
+
+const wordXmlToText = (xml) => {
+  // كل </w:p> نهاية فقرة نحوّلها لسطر جديد، وكل تاب/سطر جديد داخلي كمان
+  const withBreaks = xml.replace(/<\/w:p>/g, "\n").replace(/<w:tab\s*\/>/g, "\t").replace(/<w:br\s*\/>/g, "\n");
+  const textMatches = [...withBreaks.matchAll(/<w:t[^>]*>([^<]*)<\/w:t>|(\n)/g)];
+  let out = "";
+  for (const match of textMatches) {
+    out += match[2] ? "\n" : decodeXmlEntities(match[1] || "");
+  }
+  return out
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .join("\n");
+};
+
+const extractDocxText = async (buffer) => {
+  const entries = readZipEntries(buffer);
+  const docEntry = entries.find((e) => e.entryName === "word/document.xml");
+  if (!docEntry || docEntry.dataEnd > buffer.byteLength) return "";
+
+  const bytes = new Uint8Array(buffer).slice(docEntry.dataStart, docEntry.dataEnd);
+  let xmlBytes;
+  if (docEntry.method === 8) {
+    try {
+      xmlBytes = await inflateBytes(bytes, "deflate-raw");
+    } catch {
+      return "";
+    }
+  } else {
+    xmlBytes = bytes;
+  }
+
+  return wordXmlToText(decodeUtf8(xmlBytes));
+};
+
+// ---------------------------------------------------------------------------
+// PDF: قراءة حقيقية بفك ضغط FlateDecode واستخراج نصوص عوامل العرض Tj / TJ
+// ---------------------------------------------------------------------------
+const unescapePdfString = (str) =>
+  str.replace(/\\(\d{1,3}|.)/g, (_, token) => {
+    if (/^\d+$/.test(token)) return String.fromCharCode(parseInt(token, 8));
+    return { n: "\n", r: "\r", t: "\t", b: "\b", f: "\f", "(": "(", ")": ")", "\\": "\\" }[token] ?? token;
+  });
+
+const extractTextOperators = (contentText) => {
+  const parts = [];
+  const opRegex = /\(((?:[^()\\]|\\.)*)\)\s*Tj|\[((?:[^\[\]\\]|\\.)*)\]\s*TJ/g;
+  let match;
+  while ((match = opRegex.exec(contentText))) {
+    if (match[1] !== undefined) {
+      parts.push(unescapePdfString(match[1]));
+    } else if (match[2] !== undefined) {
+      const strRegex = /\(((?:[^()\\]|\\.)*)\)/g;
+      let strMatch;
+      let line = "";
+      while ((strMatch = strRegex.exec(match[2]))) {
+        line += unescapePdfString(strMatch[1]);
+      }
+      if (line) parts.push(line);
+    }
+  }
+  return parts;
+};
+
+const extractPdfText = async (buffer) => {
+  const bytes = new Uint8Array(buffer);
+  const latin1 = decodeLatin1(buffer);
+  const lines = [];
+
+  const streamRegex = /stream\r?\n/g;
+  let match;
+  while ((match = streamRegex.exec(latin1))) {
+    const streamStart = match.index + match[0].length;
+    const endIdx = latin1.indexOf("endstream", streamStart);
+    if (endIdx === -1) continue;
+
+    const dictText = latin1.slice(Math.max(0, match.index - 300), match.index);
+    const isFlate = /\/Filter\s*(\/FlateDecode|\[\s*\/FlateDecode)/.test(dictText);
+
+    let streamEnd = endIdx;
+    while (streamEnd > streamStart && (latin1[streamEnd - 1] === "\n" || latin1[streamEnd - 1] === "\r")) {
+      streamEnd -= 1;
+    }
+    const rawStreamBytes = bytes.slice(streamStart, streamEnd);
+
+    let contentText = "";
+    if (isFlate) {
+      try {
+        const inflated = await inflateBytes(rawStreamBytes, "deflate");
+        contentText = decodeLatin1(inflated);
+      } catch {
+        continue;
+      }
+    } else {
+      contentText = decodeLatin1(rawStreamBytes);
+    }
+
+    const found = extractTextOperators(contentText);
+    if (found.length) lines.push(found.join(" "));
+  }
+
+  if (lines.length) return lines.join("\n");
+
+  const literalMatches = [...latin1.matchAll(/\(([^\\)]*(?:\\.[^\\)]*)*)\)/g)]
+    .map((m) => unescapePdfString(m[1]).trim())
+    .filter((line) => line.length > 2 && /[A-Za-z\u0600-\u06FF]/.test(line));
+  return literalMatches.length ? [...new Set(literalMatches)].join("\n") : "";
+};
+
+const readZipEntryNames = (buffer) => readZipEntries(buffer);
 
 const extractZipText = (buffer) => {
   const entries = readZipEntryNames(buffer);
@@ -4289,7 +4400,7 @@ const extractZipText = (buffer) => {
 
     if (!isUseful || entry.dataEnd > buffer.byteLength) continue;
 
-    const slice = buffer.slice(entry.dataStart, entry.dataEnd);
+    const slice = new Uint8Array(buffer).slice(entry.dataStart, entry.dataEnd);
     const text = decodeUtf8(slice);
     if (text.trim() && !looksBinary(text)) {
       chunks.push(`--- ${entry.entryName} ---\n${text.trim()}`);
@@ -4340,13 +4451,13 @@ const readAnalysisFile = exports.readAnalysisFile = async (file) => {
   const buffer = await readArrayBuffer(file);
 
   if (DOCX_EXTENSIONS.has(extension)) {
-    const text = extractDocxText(buffer);
+    const text = await extractDocxText(buffer);
     if (!text.trim()) throw new Error("unsupported-docx");
     return text;
   }
 
   if (PDF_EXTENSIONS.has(extension)) {
-    const text = extractPdfText(buffer);
+    const text = await extractPdfText(buffer);
     if (!text.trim()) throw new Error("unsupported-pdf");
     return text;
   }
