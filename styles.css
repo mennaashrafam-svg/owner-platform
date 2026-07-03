@@ -397,6 +397,7 @@ h1 {
   font-weight: 700;
   line-height: 1.28;
   text-align: center;
+  text-decoration: none;
 }
 
 .nav-item:hover,
