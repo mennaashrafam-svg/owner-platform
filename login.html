@@ -98,6 +98,9 @@
     <div class="link-row">
       <a href="register.html" id="link-register">ليس لديك حساب؟ إنشاء حساب جديد</a>
     </div>
+    <div class="link-row" style="margin-top: 8px;">
+      <a href="forgot-password.html" id="link-forgot">نسيت كلمة المرور؟</a>
+    </div>
   </div>
 
   <script>
@@ -112,6 +115,7 @@
         password: "كلمة المرور",
         login: "دخول",
         registerLink: "ليس لديك حساب؟ إنشاء حساب جديد",
+        forgotLink: "نسيت كلمة المرور؟",
       },
       en: {
         pageTitle: "Sign In - Owner Platform",
@@ -121,6 +125,7 @@
         password: "Password",
         login: "Sign In",
         registerLink: "Don't have an account? Create one",
+        forgotLink: "Forgot password?",
       },
     };
 
@@ -135,6 +140,7 @@
       document.getElementById("lbl-password").textContent = t.password;
       document.getElementById("btn-login").textContent = t.login;
       document.getElementById("link-register").textContent = t.registerLink;
+      document.getElementById("link-forgot").textContent = t.forgotLink;
       document.getElementById("lang-ar").classList.toggle("active", lang === "ar");
       document.getElementById("lang-en").classList.toggle("active", lang === "en");
     }
