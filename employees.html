@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" id="html-root">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title id="page-title">فريق العمل - Owner Platform</title>
+  <style>
+    :root {
+      --bg-0: #070b14;
+      --bg-1: #0d1424;
+      --panel: #141c30;
+      --panel-border: rgba(148, 163, 209, 0.14);
+      --accent-a: #5b7cfa;
+      --accent-b: #8b5cf6;
+      --text: #f3f5fb;
+      --muted: #8a93ab;
+      --danger: #fb7185;
+      --danger-bg: rgba(251, 113, 133, 0.1);
+      --success: #34d399;
+      --success-bg: rgba(52, 211, 153, 0.1);
+      --radius-lg: 22px;
+      --radius-md: 12px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      color: var(--text);
+      min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
+      background: var(--bg-0);
+      padding: 40px 20px 80px;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: -20%;
+      background:
+        radial-gradient(circle at 20% 15%, rgba(91, 124, 250, 0.16), transparent 45%),
+        radial-gradient(circle at 85% 80%, rgba(139, 92, 246, 0.14), transparent 45%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .page-wrap {
+      position: relative;
+      z-index: 1;
+      max-width: 640px;
+      margin: 0 auto;
+    }
+
+    .lang-switch {
+      position: fixed;
+      top: 24px;
+      inset-inline-end: 24px;
+      display: flex;
+      gap: 6px;
+      z-index: 2;
+    }
+    .lang-switch button {
+      padding: 6px 14px;
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 999px;
+      color: var(--muted);
+      font-size: 12.5px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .lang-switch button.active {
+      background: linear-gradient(135deg, var(--accent-a), var(--accent-b));
+      color: #fff;
+      border-color: transparent;
+    }
+
+    .header-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 28px;
+    }
+    .icon-badge {
+      width: 48px;
+      height: 48px;
+      flex-shrink: 0;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, var(--accent-a), var(--accent-b));
+      box-shadow: 0 10px 24px -8px rgba(91, 124, 250, 0.55);
+    }
+    .icon-badge svg { width: 22px; height: 22px; }
+    h1 { font-size: 21px; font-weight: 700; margin-bottom: 4px; }
+    p.subtitle { color: var(--muted); font-size: 13.5px; }
+
+    .panel {
+      background: linear-gradient(180deg, var(--panel), var(--bg-1));
+      border: 1px solid var(--panel-border);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      box-shadow: 0 24px 60px -24px rgba(0, 0, 0, 0.55);
+      margin-bottom: 20px;
+      animation: rise 0.4s ease both;
+    }
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .field-row { display: flex; gap: 12px; flex-wrap: wrap; }
+    .field-row > div { flex: 1; min-width: 160px; }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 13px;
+      color: #c3cadf;
+      font-weight: 600;
+    }
+    input, select {
+      width: 100%;
+      padding: 12px 14px;
+      background: var(--bg-0);
+      border: 1px solid var(--panel-border);
+      border-radius: var(--radius-md);
+      color: var(--text);
+      font-size: 14px;
+      margin-bottom: 16px;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--accent-a);
+      box-shadow: 0 0 0 3px rgba(91, 124, 250, 0.18);
+    }
+    input::placeholder { color: #4b5568; }
+
+    button.primary {
+      padding: 12px 22px;
+      background: linear-gradient(135deg, var(--accent-a), var(--accent-b));
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-md);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+      box-shadow: 0 12px 24px -12px rgba(91, 124, 250, 0.65);
+    }
+    button.primary:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 16px 30px -12px rgba(91, 124, 250, 0.75);
+    }
+    button.primary:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+
+    .error {
+      color: var(--danger);
+      background: var(--danger-bg);
+      border: 1px solid rgba(251, 113, 133, 0.25);
+      padding: 12px 14px;
+      border-radius: var(--radius-md);
+      font-size: 13.5px;
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    .team-list { display: flex; flex-direction: column; gap: 10px; }
+    .team-empty {
+      text-align: center;
+      color: var(--muted);
+      font-size: 13.5px;
+      padding: 30px 10px;
+    }
+    .team-card {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: var(--bg-0);
+      border: 1px solid var(--panel-border);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+    }
+    .avatar {
+      width: 40px;
+      height: 40px;
+      flex-shrink: 0;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--accent-a), var(--accent-b));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+      color: #fff;
+    }
+    .team-info { flex: 1; min-width: 0; }
+    .team-name { font-size: 14.5px; font-weight: 600; margin-bottom: 2px; }
+    .team-role { font-size: 12.5px; color: var(--muted); }
+    .delete-btn {
+      background: transparent;
+      border: 1px solid var(--panel-border);
+      color: var(--danger);
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 12.5px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      flex-shrink: 0;
+    }
+    .delete-btn:hover { background: var(--danger-bg); border-color: rgba(251, 113, 133, 0.35); }
+
+    .link-row { text-align: center; margin-top: 24px; }
+    .link-row a { color: var(--muted); font-size: 13.5px; text-decoration: none; transition: color 0.15s ease; }
+    .link-row a:hover { color: var(--text); }
+
+    @media (prefers-reduced-motion: reduce) {
+      .panel { animation: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="lang-switch">
+    <button type="button" id="lang-ar" onclick="setLang('ar')">عربي</button>
+    <button type="button" id="lang-en" onclick="setLang('en')">EN</button>
+  </div>
+
+  <div class="page-wrap">
+    <div class="header-row">
+      <div class="icon-badge">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M17 20V18C17 15.7909 15.2091 14 13 14H7C4.79086 14 3 15.7909 3 18V20" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="10" cy="7" r="4" stroke="white" stroke-width="1.8"/>
+          <path d="M21 20V18C20.9986 16.1771 19.7973 14.5713 18.06 14.06" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+          <path d="M15 4.13C16.7413 4.62308 17.9997 6.20955 17.9997 8.005C17.9997 9.80045 16.7413 11.3869 15 11.88" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div>
+        <h1 id="txt-title">فريق العمل</h1>
+        <p class="subtitle" id="txt-subtitle">أضيفي الموظفين المسؤولين عن المحادثات في منصتك</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="error" id="error">حدث خطأ، يرجى المحاولة مرة أخرى</div>
+      <div class="field-row">
+        <div>
+          <label id="lbl-name">اسم الموظف</label>
+          <input type="text" id="agent-name" placeholder="مثال: سارة محمد">
+        </div>
+        <div>
+          <label id="lbl-role">الدور الوظيفي</label>
+          <input type="text" id="agent-role" placeholder="مثال: مبيعات">
+        </div>
+      </div>
+      <button type="button" class="primary" id="btn-add" onclick="addAgent()">إضافة موظف</button>
+    </div>
+
+    <div class="panel">
+      <div class="team-list" id="team-list">
+        <div class="team-empty" id="team-empty">لا يوجد موظفون مضافون بعد</div>
+      </div>
+    </div>
+
+    <div class="link-row">
+      <a href="index.html" id="link-back">العودة للوحة التحكم</a>
+    </div>
+  </div>
+
+  <script>
+    const API = "https://my-server-production-0e71.up.railway.app";
+    const token = localStorage.getItem("token");
+    if (!token) window.location.href = "login.html";
+
+    const translations = {
+      ar: {
+        pageTitle: "فريق العمل - Owner Platform",
+        title: "فريق العمل",
+        subtitle: "أضيفي الموظفين المسؤولين عن المحادثات في منصتك",
+        error: "حدث خطأ، يرجى المحاولة مرة أخرى",
+        name: "اسم الموظف",
+        namePlaceholder: "مثال: سارة محمد",
+        role: "الدور الوظيفي",
+        rolePlaceholder: "مثال: مبيعات",
+        add: "إضافة موظف",
+        adding: "جارٍ الإضافة...",
+        empty: "لا يوجد موظفون مضافون بعد",
+        delete: "حذف",
+        deleteConfirm: "هل تريدين حذف هذا الموظف؟",
+        nameRequired: "اسم الموظف مطلوب",
+        back: "العودة للوحة التحكم",
+      },
+      en: {
+        pageTitle: "Team - Owner Platform",
+        title: "Team",
+        subtitle: "Add the employees responsible for conversations on your platform",
+        error: "An error occurred, please try again",
+        name: "Employee Name",
+        namePlaceholder: "e.g. Sara Mohamed",
+        role: "Role",
+        rolePlaceholder: "e.g. Sales",
+        add: "Add Employee",
+        adding: "Adding...",
+        empty: "No team members added yet",
+        delete: "Delete",
+        deleteConfirm: "Delete this team member?",
+        nameRequired: "Employee name is required",
+        back: "Back to Dashboard",
+      },
+    };
+
+    function applyLang(lang) {
+      const t = translations[lang];
+      document.getElementById("html-root").lang = lang;
+      document.getElementById("html-root").dir = lang === "ar" ? "rtl" : "ltr";
+      document.getElementById("page-title").textContent = t.pageTitle;
+      document.getElementById("txt-title").textContent = t.title;
+      document.getElementById("txt-subtitle").textContent = t.subtitle;
+      document.getElementById("error").textContent = t.error;
+      document.getElementById("lbl-name").textContent = t.name;
+      document.getElementById("agent-name").placeholder = t.namePlaceholder;
+      document.getElementById("lbl-role").textContent = t.role;
+      document.getElementById("agent-role").placeholder = t.rolePlaceholder;
+      document.getElementById("btn-add").textContent = t.add;
+      document.getElementById("link-back").textContent = t.back;
+      document.getElementById("lang-ar").classList.toggle("active", lang === "ar");
+      document.getElementById("lang-en").classList.toggle("active", lang === "en");
+      renderAgents();
+    }
+
+    function setLang(lang) {
+      localStorage.setItem("authLang", lang);
+      applyLang(lang);
+    }
+
+    const currentLangGetter = () => localStorage.getItem("authLang") || "ar";
+
+    let agents = [];
+    const emptyStateEl = document.getElementById("team-empty");
+
+    function initials(name) {
+      const parts = String(name || "").trim().split(/\s+/);
+      return ((parts[0]?.[0] || "") + (parts[1]?.[0] || "")).toUpperCase() || "?";
+    }
+
+    function renderAgents() {
+      const t = translations[currentLangGetter()];
+      const list = document.getElementById("team-list");
+      emptyStateEl.textContent = t.empty;
+
+      if (agents.length === 0) {
+        list.innerHTML = "";
+        list.appendChild(emptyStateEl);
+        return;
+      }
+
+      list.innerHTML = "";
+      agents.forEach((agent) => {
+        const card = document.createElement("div");
+        card.className = "team-card";
+        card.innerHTML = `
+          <div class="avatar">${initials(agent.name)}</div>
+          <div class="team-info">
+            <div class="team-name"></div>
+            <div class="team-role"></div>
+          </div>
+          <button type="button" class="delete-btn">${t.delete}</button>
+        `;
+        card.querySelector(".team-name").textContent = agent.name;
+        card.querySelector(".team-role").textContent = agent.role || "-";
+        card.querySelector(".delete-btn").addEventListener("click", () => deleteAgent(agent.id));
+        list.appendChild(card);
+      });
+    }
+
+    async function loadAgents() {
+      try {
+        const res = await fetch(`${API}/api/agents`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.status === 401) {
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          window.location.href = "login.html";
+          return;
+        }
+        if (!res.ok) return;
+        agents = await res.json();
+        renderAgents();
+      } catch (err) {
+        console.error("تعذر تحميل قائمة الموظفين:", err);
+      }
+    }
+
+    async function addAgent() {
+      const t = translations[currentLangGetter()];
+      const errorEl = document.getElementById("error");
+      errorEl.style.display = "none";
+
+      const nameInput = document.getElementById("agent-name");
+      const roleInput = document.getElementById("agent-role");
+      const name = nameInput.value.trim();
+      const role = roleInput.value.trim();
+
+      if (!name) {
+        errorEl.textContent = t.nameRequired;
+        errorEl.style.display = "block";
+        return;
+      }
+
+      const btn = document.getElementById("btn-add");
+      btn.disabled = true;
+      btn.textContent = t.adding;
+
+      try {
+        const res = await fetch(`${API}/api/agents`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ name, role: role || null }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message);
+        nameInput.value = "";
+        roleInput.value = "";
+        await loadAgents();
+      } catch (err) {
+        errorEl.textContent = err.message || t.error;
+        errorEl.style.display = "block";
+      } finally {
+        btn.disabled = false;
+        btn.textContent = t.add;
+      }
+    }
+
+    async function deleteAgent(id) {
+      const t = translations[currentLangGetter()];
+      if (!window.confirm(t.deleteConfirm)) return;
+      try {
+        const res = await fetch(`${API}/api/agents/${id}`, {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) return;
+        await loadAgents();
+      } catch (err) {
+        console.error("تعذر حذف الموظف:", err);
+      }
+    }
+
+    applyLang(currentLangGetter());
+    loadAgents();
+  </script>
+</body>
+</html>
