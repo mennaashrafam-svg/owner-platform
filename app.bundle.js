@@ -2174,7 +2174,7 @@ function showRealDataBanner(count) {
   }
   const message =
     currentLang === "ar"
-      ? `وصلت ${count} محادثة حقيقية من حسابك المربوط. لوحة القيادة تحت لسه بتعرض بيانات تجريبية للعرض.`
+      ? `تم استلام ${count} محادثة حقيقية من حسابك المرتبط. لوحة القيادة أدناه لا تزال تعرض بيانات تجريبية للعرض.`
       : `${count} real conversation(s) received from your connected account. The dashboard below still shows demo data.`;
   banner.textContent = message;
   banner.hidden = false;

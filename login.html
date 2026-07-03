@@ -52,18 +52,24 @@
       margin-bottom: 16px;
       display: none;
     }
+    .link-row { text-align: center; margin-top: 16px; }
+    .link-row a { color: #94a3b8; font-size: 14px; text-decoration: none; }
+    .link-row a:hover { color: #fff; }
   </style>
 </head>
 <body>
   <div class="box">
     <h1>Owner Platform</h1>
     <p>سجل دخولك للمتابعة</p>
-    <div class="error" id="error">بيانات غلط، حاول تاني</div>
+    <div class="error" id="error">بيانات الدخول غير صحيحة، يرجى المحاولة مرة أخرى</div>
     <label>البريد الإلكتروني</label>
     <input type="email" id="email" placeholder="example@email.com">
     <label>كلمة السر</label>
     <input type="password" id="password" placeholder="••••••••">
     <button onclick="login()">دخول</button>
+    <div class="link-row">
+      <a href="register.html">ليس لديك حساب؟ إنشاء حساب جديد</a>
+    </div>
   </div>
   <script>
     const API = "https://my-server-production-0e71.up.railway.app";
