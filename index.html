@@ -7,6 +7,12 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
+    <script>
+      // حماية الصفحة: لازم يكون فيه token صحيح قبل ما نعرض الداشبورد
+      if (!localStorage.getItem("token")) {
+        window.location.replace("login.html");
+      }
+    </script>
     <div class="app-error-banner" id="app-error-banner" role="alert" hidden></div>
 
     <div class="app-shell">
@@ -41,6 +47,11 @@
         <div class="sidebar-status">
           <span class="status-pulse" aria-hidden="true"></span>
           <span data-i18n="status.live">Platform monitoring live</span>
+        </div>
+
+        <div class="sidebar-user" id="sidebar-user">
+          <span id="sidebar-user-name"></span>
+          <button type="button" id="logout-btn" data-i18n="auth.logout">Logout</button>
         </div>
       </aside>
 

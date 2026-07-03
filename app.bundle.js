@@ -2111,6 +2111,8 @@ function bootstrapApp() {
     applyTheme(currentTheme);
     applyLanguage(currentLang);
     setView(currentView);
+    setupAuthUI();
+    loadRealConversations();
   });
 }
 
@@ -2125,20 +2127,80 @@ window.OwnerPlatform = {
   loadPlatformDataFromApi,
   refreshDashboard: () => renderDashboard(),
 };
+
+const API_BASE_URL = "https://my-server-production-0e71.up.railway.app";
+
+// بيعرض اسم اليوزر المسجل دخول وبيوصل زرار تسجيل الخروج
+function setupAuthUI() {
+  safeRun("setupAuthUI", () => {
+    const nameEl = document.getElementById("sidebar-user-name");
+    const logoutBtn = document.getElementById("logout-btn");
+    if (nameEl) {
+      try {
+        const rawUser = localStorage.getItem("user");
+        const user = rawUser ? JSON.parse(rawUser) : null;
+        nameEl.textContent = user?.name || user?.email || "";
+      } catch {
+        nameEl.textContent = "";
+      }
+    }
+    if (logoutBtn) {
+      logoutBtn.addEventListener("click", () => {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        window.location.replace("login.html");
+      });
+    }
+  });
+}
+
+// بانر بسيط وآمن يعرض عدد المحادثات الحقيقية اللي وصلت من السيرفر،
+// من غير ما يحاول يحوّلها لنفس الشكل المعقد بتاع بيانات العرض الوهمية
+// (bookingSources المتداخلة ثنائية اللغة). لسه محتاجين نموذج بيانات موحّد
+// (راجع "Priority 2: Unified Conversation Model" في ENGINEER_HANDOVER.md)
+// قبل ما ندمج البيانات الحقيقية جوه نفس محرك المؤشرات ده.
+function showRealDataBanner(count) {
+  let banner = document.getElementById("app-info-banner");
+  if (!banner) {
+    banner = document.createElement("div");
+    banner.id = "app-info-banner";
+    banner.className = "app-info-banner";
+    banner.setAttribute("role", "status");
+    banner.hidden = true;
+    document.body.appendChild(banner);
+    banner.addEventListener("click", () => {
+      banner.hidden = true;
+    });
+  }
+  const message =
+    currentLang === "ar"
+      ? `وصلت ${count} محادثة حقيقية من حسابك المربوط. لوحة القيادة تحت لسه بتعرض بيانات تجريبية للعرض.`
+      : `${count} real conversation(s) received from your connected account. The dashboard below still shows demo data.`;
+  banner.textContent = message;
+  banner.hidden = false;
+}
+
 // جيب البيانات الحقيقية من السيرفر لو فيه token
 async function loadRealConversations() {
   const token = localStorage.getItem("token");
   if (!token) return;
   try {
-    const res = await fetch("https://my-server-production-0e71.up.railway.app/api/conversations", {
-      headers: { Authorization: `Bearer ${token}` }
+    const res = await fetch(`${API_BASE_URL}/api/conversations`, {
+      headers: { Authorization: `Bearer ${token}` },
     });
+    if (res.status === 401) {
+      // التوكن غلط أو منتهي: نرجّع اليوزر لصفحة تسجيل الدخول
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      window.location.replace("login.html");
+      return;
+    }
     if (!res.ok) return;
     const conversations = await res.json();
-    if (conversations.length > 0) {
-      console.log("بيانات حقيقية من السيرفر:", conversations);
-      // هنا هنضيف الكود عشان يعرضها في الداشبورد
+    if (Array.isArray(conversations) && conversations.length > 0) {
+      showRealDataBanner(conversations.length);
     }
+    return conversations;
   } catch (err) {
     console.error("خطأ في جلب البيانات:", err);
   }
@@ -2155,6 +2217,7 @@ const translations = exports.translations = {
     "nav.analysis": "Conversation Analysis",
     "nav.settings": "Settings",
     "status.live": "Platform monitoring live",
+    "auth.logout": "Logout",
     "header.eyebrow": "Executive Intelligence Command Center",
     "header.dashboardTitle": "Business Conversation Intelligence",
     "header.analysisTitle": "Conversation Analysis",
@@ -2484,6 +2547,7 @@ const translations = exports.translations = {
     "nav.analysis": "تحليل المحادثات",
     "nav.settings": "الإعدادات",
     "status.live": "مراقبة المنصة تعمل",
+    "auth.logout": "تسجيل الخروج",
     "header.eyebrow": "مركز قيادة تنفيذي ذكي",
     "header.dashboardTitle": "ذكاء محادثات الأعمال",
     "header.analysisTitle": "تحليل المحادثات",

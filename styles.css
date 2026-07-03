@@ -139,6 +139,23 @@ html {
   background: var(--page);
 }
 
+.app-info-banner {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1199;
+  max-width: min(720px, calc(100vw - 32px));
+  padding: 12px 18px;
+  border-radius: 14px;
+  background: rgba(90, 160, 255, 0.14);
+  border: 1px solid rgba(90, 160, 255, 0.45);
+  color: var(--ink);
+  box-shadow: var(--shadow-soft);
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
 .app-error-banner {
   position: fixed;
   top: 16px;
@@ -415,6 +432,41 @@ h1 {
   background: rgba(255, 255, 255, 0.58);
   font-size: 0.72rem;
   box-shadow: var(--shadow-inner), var(--shadow-soft);
+}
+
+.sidebar-user {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 10px 13px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.58);
+  font-size: 0.72rem;
+}
+
+#sidebar-user-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#logout-btn {
+  flex-shrink: 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  font-size: 0.7rem;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+#logout-btn:hover {
+  background: rgba(0, 0, 0, 0.06);
 }
 
 .status-pulse {
