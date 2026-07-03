@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="rtl" id="html-root">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>تسجيل الدخول - Owner Platform</title>
+  <title id="page-title">تسجيل الدخول - Owner Platform</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -14,6 +14,29 @@
       justify-content: center;
       align-items: center;
       min-height: 100vh;
+      position: relative;
+    }
+    .lang-switch {
+      position: absolute;
+      top: 20px;
+      inset-inline-end: 20px;
+      display: flex;
+      gap: 6px;
+    }
+    .lang-switch button {
+      padding: 6px 14px;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      color: #94a3b8;
+      font-size: 13px;
+      cursor: pointer;
+      width: auto;
+    }
+    .lang-switch button.active {
+      background: #3b82f6;
+      color: #fff;
+      border-color: #3b82f6;
     }
     .box {
       background: #1e293b;
@@ -35,7 +58,7 @@
       font-size: 14px;
       margin-bottom: 20px;
     }
-    button {
+    button.primary {
       width: 100%;
       padding: 12px;
       background: #3b82f6;
@@ -45,7 +68,7 @@
       font-size: 16px;
       cursor: pointer;
     }
-    button:hover { background: #2563eb; }
+    button.primary:hover { background: #2563eb; }
     .error {
       color: #f87171;
       font-size: 14px;
@@ -58,21 +81,70 @@
   </style>
 </head>
 <body>
+  <div class="lang-switch">
+    <button type="button" id="lang-ar" onclick="setLang('ar')">عربي</button>
+    <button type="button" id="lang-en" onclick="setLang('en')">EN</button>
+  </div>
+
   <div class="box">
     <h1>Owner Platform</h1>
-    <p>سجل دخولك للمتابعة</p>
+    <p id="txt-tagline">سجّل دخولك للمتابعة</p>
     <div class="error" id="error">بيانات الدخول غير صحيحة، يرجى المحاولة مرة أخرى</div>
-    <label>البريد الإلكتروني</label>
+    <label id="lbl-email">البريد الإلكتروني</label>
     <input type="email" id="email" placeholder="example@email.com">
-    <label>كلمة السر</label>
+    <label id="lbl-password">كلمة المرور</label>
     <input type="password" id="password" placeholder="••••••••">
-    <button onclick="login()">دخول</button>
+    <button type="button" class="primary" id="btn-login" onclick="login()">دخول</button>
     <div class="link-row">
-      <a href="register.html">ليس لديك حساب؟ إنشاء حساب جديد</a>
+      <a href="register.html" id="link-register">ليس لديك حساب؟ إنشاء حساب جديد</a>
     </div>
   </div>
+
   <script>
     const API = "https://my-server-production-0e71.up.railway.app";
+
+    const translations = {
+      ar: {
+        pageTitle: "تسجيل الدخول - Owner Platform",
+        tagline: "سجّل دخولك للمتابعة",
+        error: "بيانات الدخول غير صحيحة، يرجى المحاولة مرة أخرى",
+        email: "البريد الإلكتروني",
+        password: "كلمة المرور",
+        login: "دخول",
+        registerLink: "ليس لديك حساب؟ إنشاء حساب جديد",
+      },
+      en: {
+        pageTitle: "Sign In - Owner Platform",
+        tagline: "Sign in to continue",
+        error: "Incorrect login details, please try again",
+        email: "Email",
+        password: "Password",
+        login: "Sign In",
+        registerLink: "Don't have an account? Create one",
+      },
+    };
+
+    function applyLang(lang) {
+      const t = translations[lang];
+      document.getElementById("html-root").lang = lang;
+      document.getElementById("html-root").dir = lang === "ar" ? "rtl" : "ltr";
+      document.getElementById("page-title").textContent = t.pageTitle;
+      document.getElementById("txt-tagline").textContent = t.tagline;
+      document.getElementById("error").textContent = t.error;
+      document.getElementById("lbl-email").textContent = t.email;
+      document.getElementById("lbl-password").textContent = t.password;
+      document.getElementById("btn-login").textContent = t.login;
+      document.getElementById("link-register").textContent = t.registerLink;
+      document.getElementById("lang-ar").classList.toggle("active", lang === "ar");
+      document.getElementById("lang-en").classList.toggle("active", lang === "en");
+    }
+
+    function setLang(lang) {
+      localStorage.setItem("authLang", lang);
+      applyLang(lang);
+    }
+
+    applyLang(localStorage.getItem("authLang") || "ar");
 
     if (localStorage.getItem("token")) {
       window.location.href = "index.html";

@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="rtl" id="html-root">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ربط المنصات - Owner Platform</title>
+  <title id="page-title">ربط المنصات - Owner Platform</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -11,6 +11,28 @@
       background: #0f172a;
       color: #fff;
       padding: 40px 20px;
+      position: relative;
+    }
+    .lang-switch {
+      position: absolute;
+      top: 20px;
+      inset-inline-end: 20px;
+      display: flex;
+      gap: 6px;
+    }
+    .lang-switch button {
+      padding: 6px 14px;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      color: #94a3b8;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .lang-switch button.active {
+      background: #3b82f6;
+      color: #fff;
+      border-color: #3b82f6;
     }
     h1 { font-size: 24px; margin-bottom: 8px; }
     p { color: #94a3b8; margin-bottom: 32px; }
@@ -45,33 +67,38 @@
   </style>
 </head>
 <body>
-  <h1>ربط المنصات</h1>
-  <p>اربط منصاتك ليصل المحتوى تلقائياً إلى لوحة التحكم</p>
+  <div class="lang-switch">
+    <button type="button" id="lang-ar" onclick="setLang('ar')">عربي</button>
+    <button type="button" id="lang-en" onclick="setLang('en')">EN</button>
+  </div>
+
+  <h1 id="txt-title">ربط المنصات</h1>
+  <p id="txt-subtitle">اربط منصاتك ليصل المحتوى تلقائياً إلى لوحة التحكم</p>
 
   <div class="card">
-    <h2>واتساب Business</h2>
-    <p>أدخل بيانات حساب واتساب بيزنس الخاص بك</p>
+    <h2>WhatsApp Business</h2>
+    <p id="wa-desc">أدخل بيانات حساب واتساب بيزنس الخاص بك</p>
     <input type="text" id="wa-token" placeholder="WhatsApp Access Token">
     <input type="text" id="wa-phone" placeholder="Phone Number ID">
-    <button onclick="saveWhatsapp()">ربط واتساب</button>
+    <button type="button" id="wa-btn" onclick="saveWhatsapp()">ربط واتساب</button>
     <div class="success" id="wa-success">تم الربط بنجاح!</div>
   </div>
 
   <div class="card">
-    <h2>إنستجرام</h2>
-    <p>أدخل بيانات حساب إنستجرام الخاص بك</p>
+    <h2 id="ig-title">إنستجرام</h2>
+    <p id="ig-desc">أدخل بيانات حساب إنستجرام الخاص بك</p>
     <input type="text" id="ig-token" placeholder="Instagram Access Token">
     <input type="text" id="ig-id" placeholder="Instagram Account ID">
-    <button onclick="saveInstagram()">ربط إنستجرام</button>
+    <button type="button" id="ig-btn" onclick="saveInstagram()">ربط إنستجرام</button>
     <div class="success" id="ig-success">تم الربط بنجاح!</div>
   </div>
 
   <div class="card">
-    <h2>فيسبوك</h2>
-    <p>أدخل بيانات حساب فيسبوك الخاص بك</p>
+    <h2 id="fb-title">فيسبوك</h2>
+    <p id="fb-desc">أدخل بيانات حساب فيسبوك الخاص بك</p>
     <input type="text" id="fb-token" placeholder="Facebook Access Token">
     <input type="text" id="fb-id" placeholder="Page ID">
-    <button onclick="saveFacebook()">ربط فيسبوك</button>
+    <button type="button" id="fb-btn" onclick="saveFacebook()">ربط فيسبوك</button>
     <div class="success" id="fb-success">تم الربط بنجاح!</div>
   </div>
 
@@ -80,6 +107,66 @@
     const token = localStorage.getItem("token");
 
     if (!token) window.location.href = "login.html";
+
+    const translations = {
+      ar: {
+        pageTitle: "ربط المنصات - Owner Platform",
+        title: "ربط المنصات",
+        subtitle: "اربط منصاتك ليصل المحتوى تلقائياً إلى لوحة التحكم",
+        waDesc: "أدخل بيانات حساب واتساب بيزنس الخاص بك",
+        waBtn: "ربط واتساب",
+        igTitle: "إنستجرام",
+        igDesc: "أدخل بيانات حساب إنستجرام الخاص بك",
+        igBtn: "ربط إنستجرام",
+        fbTitle: "فيسبوك",
+        fbDesc: "أدخل بيانات حساب فيسبوك الخاص بك",
+        fbBtn: "ربط فيسبوك",
+        success: "تم الربط بنجاح!",
+      },
+      en: {
+        pageTitle: "Connect Platforms - Owner Platform",
+        title: "Connect Platforms",
+        subtitle: "Connect your platforms so conversations reach your dashboard automatically",
+        waDesc: "Enter your WhatsApp Business account details",
+        waBtn: "Connect WhatsApp",
+        igTitle: "Instagram",
+        igDesc: "Enter your Instagram account details",
+        igBtn: "Connect Instagram",
+        fbTitle: "Facebook",
+        fbDesc: "Enter your Facebook account details",
+        fbBtn: "Connect Facebook",
+        success: "Connected successfully!",
+      },
+    };
+
+    function applyLang(lang) {
+      const t = translations[lang];
+      document.getElementById("html-root").lang = lang;
+      document.getElementById("html-root").dir = lang === "ar" ? "rtl" : "ltr";
+      document.getElementById("page-title").textContent = t.pageTitle;
+      document.getElementById("txt-title").textContent = t.title;
+      document.getElementById("txt-subtitle").textContent = t.subtitle;
+      document.getElementById("wa-desc").textContent = t.waDesc;
+      document.getElementById("wa-btn").textContent = t.waBtn;
+      document.getElementById("wa-success").textContent = t.success;
+      document.getElementById("ig-title").textContent = t.igTitle;
+      document.getElementById("ig-desc").textContent = t.igDesc;
+      document.getElementById("ig-btn").textContent = t.igBtn;
+      document.getElementById("ig-success").textContent = t.success;
+      document.getElementById("fb-title").textContent = t.fbTitle;
+      document.getElementById("fb-desc").textContent = t.fbDesc;
+      document.getElementById("fb-btn").textContent = t.fbBtn;
+      document.getElementById("fb-success").textContent = t.success;
+      document.getElementById("lang-ar").classList.toggle("active", lang === "ar");
+      document.getElementById("lang-en").classList.toggle("active", lang === "en");
+    }
+
+    function setLang(lang) {
+      localStorage.setItem("authLang", lang);
+      applyLang(lang);
+    }
+
+    applyLang(localStorage.getItem("authLang") || "ar");
 
     async function savePlatform(platform, data) {
       const res = await fetch(`${API}/api/settings/platforms`, {

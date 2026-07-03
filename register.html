@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="rtl" id="html-root">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>إنشاء حساب - Owner Platform</title>
+  <title id="page-title">إنشاء حساب - Owner Platform</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -14,6 +14,29 @@
       justify-content: center;
       align-items: center;
       min-height: 100vh;
+      position: relative;
+    }
+    .lang-switch {
+      position: absolute;
+      top: 20px;
+      inset-inline-end: 20px;
+      display: flex;
+      gap: 6px;
+    }
+    .lang-switch button {
+      padding: 6px 14px;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      color: #94a3b8;
+      font-size: 13px;
+      cursor: pointer;
+      width: auto;
+    }
+    .lang-switch button.active {
+      background: #3b82f6;
+      color: #fff;
+      border-color: #3b82f6;
     }
     .box {
       background: #1e293b;
@@ -35,7 +58,7 @@
       font-size: 14px;
       margin-bottom: 20px;
     }
-    button {
+    button.primary {
       width: 100%;
       padding: 12px;
       background: #3b82f6;
@@ -46,30 +69,91 @@
       cursor: pointer;
       margin-bottom: 12px;
     }
-    button:hover { background: #2563eb; }
+    button.primary:hover { background: #2563eb; }
     .error { color: #f87171; font-size: 14px; margin-bottom: 16px; display: none; }
     .success { color: #4ade80; font-size: 14px; margin-bottom: 16px; display: none; }
-    a { color: #94a3b8; font-size: 14px; text-decoration: none; }
-    a:hover { color: #fff; }
+    .link-row { text-align: center; }
+    .link-row a { color: #94a3b8; font-size: 14px; text-decoration: none; }
+    .link-row a:hover { color: #fff; }
   </style>
 </head>
 <body>
+  <div class="lang-switch">
+    <button type="button" id="lang-ar" onclick="setLang('ar')">عربي</button>
+    <button type="button" id="lang-en" onclick="setLang('en')">EN</button>
+  </div>
+
   <div class="box">
     <h1>Owner Platform</h1>
-    <p>إنشاء حساب جديد</p>
+    <p id="txt-tagline">إنشاء حساب جديد</p>
     <div class="error" id="error">حدث خطأ، يرجى المحاولة مرة أخرى</div>
     <div class="success" id="success">تم إنشاء الحساب بنجاح، جارٍ التحويل...</div>
-    <label>الاسم</label>
+    <label id="lbl-name">الاسم</label>
     <input type="text" id="name" placeholder="اسمك">
-    <label>البريد الإلكتروني</label>
+    <label id="lbl-email">البريد الإلكتروني</label>
     <input type="email" id="email" placeholder="example@email.com">
-    <label>كلمة السر</label>
+    <label id="lbl-password">كلمة المرور</label>
     <input type="password" id="password" placeholder="••••••••">
-    <button onclick="register()">إنشاء حساب</button>
-    <a href="login.html">لديك حساب بالفعل؟ تسجيل الدخول</a>
+    <button type="button" class="primary" id="btn-register" onclick="register()">إنشاء حساب</button>
+    <div class="link-row">
+      <a href="login.html" id="link-login">لديك حساب بالفعل؟ تسجيل الدخول</a>
+    </div>
   </div>
+
   <script>
     const API = "https://my-server-production-0e71.up.railway.app";
+
+    const translations = {
+      ar: {
+        pageTitle: "إنشاء حساب - Owner Platform",
+        tagline: "إنشاء حساب جديد",
+        error: "حدث خطأ، يرجى المحاولة مرة أخرى",
+        success: "تم إنشاء الحساب بنجاح، جارٍ التحويل...",
+        name: "الاسم",
+        namePlaceholder: "اسمك",
+        email: "البريد الإلكتروني",
+        password: "كلمة المرور",
+        register: "إنشاء حساب",
+        loginLink: "لديك حساب بالفعل؟ تسجيل الدخول",
+      },
+      en: {
+        pageTitle: "Create Account - Owner Platform",
+        tagline: "Create a new account",
+        error: "An error occurred, please try again",
+        success: "Account created successfully, redirecting...",
+        name: "Name",
+        namePlaceholder: "Your name",
+        email: "Email",
+        password: "Password",
+        register: "Create Account",
+        loginLink: "Already have an account? Sign in",
+      },
+    };
+
+    function applyLang(lang) {
+      const t = translations[lang];
+      document.getElementById("html-root").lang = lang;
+      document.getElementById("html-root").dir = lang === "ar" ? "rtl" : "ltr";
+      document.getElementById("page-title").textContent = t.pageTitle;
+      document.getElementById("txt-tagline").textContent = t.tagline;
+      document.getElementById("error").textContent = t.error;
+      document.getElementById("success").textContent = t.success;
+      document.getElementById("lbl-name").textContent = t.name;
+      document.getElementById("name").placeholder = t.namePlaceholder;
+      document.getElementById("lbl-email").textContent = t.email;
+      document.getElementById("lbl-password").textContent = t.password;
+      document.getElementById("btn-register").textContent = t.register;
+      document.getElementById("link-login").textContent = t.loginLink;
+      document.getElementById("lang-ar").classList.toggle("active", lang === "ar");
+      document.getElementById("lang-en").classList.toggle("active", lang === "en");
+    }
+
+    function setLang(lang) {
+      localStorage.setItem("authLang", lang);
+      applyLang(lang);
+    }
+
+    applyLang(localStorage.getItem("authLang") || "ar");
 
     if (localStorage.getItem("token")) {
       window.location.href = "index.html";
@@ -94,7 +178,7 @@
           window.location.href = "index.html";
         }, 1500);
       } catch (err) {
-        document.getElementById("error").innerText = err.message;
+        document.getElementById("error").textContent = err.message;
         document.getElementById("error").style.display = "block";
       }
     }
