@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Check syntax of all source files
+        run: |
+          for f in $(git ls-files '*.js' '*.mjs'); do
+            node --check "$f"
+          done
+
+      - name: Validate Analyze File parser fixtures
+        run: node scripts/validate-file-parser.mjs
+
+      # هذا الفحص هو نفس فكرة الـ pre-commit hook المحلي، لكن على مستوى GitHub
+      # نفسه بدل ما يعتمد على جهاز واحد بعينه. لو حد عدّل app.bundle.js يدويًا
+      # (زي ما حصل قبل كده) من غير ما يبني نفس النسخة من app.js، الفحص ده هيفشل
+      # ويوقف الـ merge بدل ما يوصل الفرق بصمت.
+      - name: Ensure app.bundle.js matches a fresh build from source
+        run: |
+          cp app.bundle.js /tmp/app.bundle.committed.js
+          node scripts/build-bundle.mjs
+          diff /tmp/app.bundle.committed.js app.bundle.js
