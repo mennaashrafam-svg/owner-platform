@@ -270,8 +270,9 @@
     </div>
   </div>
 
+  <script src="config.js"></script>
   <script>
-    const API = "https://my-server-production-0e71.up.railway.app";
+    const API = window.OWNER_PLATFORM_API_BASE_URL;
     const token = localStorage.getItem("token");
     if (!token) window.location.href = "login.html";
 

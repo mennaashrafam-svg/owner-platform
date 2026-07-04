@@ -10,7 +10,7 @@ import { countBookings, getPlatformTotal, getSourceTotal, filterPlatformsByIds, 
 import { buildIntelligenceAlerts as buildAlerts } from "./analysis/alerts.js";
 import { parseConversationFileText } from "./analysis/fileParser.js";
 import { readAnalysisFile } from "./analysis/fileReader.js";
-import { bookingMeta, reportField, signalTile, badge, agentKpi, searchStat, settingsField, settingsSection } from "./ui/components.js";
+import { bookingMeta, reportField, signalTile, badge, agentKpi, searchStat, settingsField, settingsSection, escapeHtml } from "./ui/components.js";
 import { auditLog, maskName, maskPhone, logSensitiveReveal } from "./privacy/privacy.js";
 import "./integrations/index.js";
 
@@ -1483,16 +1483,16 @@ function renderFileAnalysisDetail() {
       <article class="conversation-report">
         <div class="report-grid">
           ${reportField(text("file.classification"), text(`outcomes.${selected.outcome}`))}
-          ${reportField(text("bookings.source"), selected.source)}
-          ${reportField(text("bookings.employee"), selected.employee)}
-          ${reportField(text("file.reason"), selected.reason)}
+          ${reportField(text("bookings.source"), escapeHtml(selected.source))}
+          ${reportField(text("bookings.employee"), escapeHtml(selected.employee))}
+          ${reportField(text("file.reason"), escapeHtml(selected.reason))}
           ${reportField(text("metrics.revenueInsights"), formatCurrency(selected.revenue))}
-          ${reportField(text("bookings.objections"), selected.objections || "-")}
-          ${reportField(text("file.recommendations"), selected.recommendation || (selected.outcome === "cnc" ? text("cnc.recommendation") : "-"))}
+          ${reportField(text("bookings.objections"), escapeHtml(selected.objections || "-"))}
+          ${reportField(text("file.recommendations"), escapeHtml(selected.recommendation || (selected.outcome === "cnc" ? text("cnc.recommendation") : "-")))}
         </div>
         <div class="report-field featured-field">
           <span>${text("file.conversationEvidence")}</span>
-          <strong class="file-evidence">${selected.evidence}</strong>
+          <strong class="file-evidence">${escapeHtml(selected.evidence)}</strong>
         </div>
       </article>
     `;
@@ -1505,32 +1505,32 @@ function renderFileAnalysisDetail() {
   );
   title.textContent = fileAnalysisDrill.type === "revenue" ? text("file.revenueCalculation") : text("file.evidence");
   const evidenceDetail = (conversation) => {
-    if (fileAnalysisDrill.type === "revenue") return bookingMeta(text("file.revenueSource"), `${conversation.source} · ${formatCurrency(conversation.revenue)}`);
-    if (fileAnalysisDrill.type === "objections") return bookingMeta(text("file.objectionType"), conversation.objections || "-");
-    if (fileAnalysisDrill.type === "cnc") return `${bookingMeta(text("file.missingClose"), conversation.reason)}${bookingMeta(text("file.recommendedNextStep"), conversation.recommendation || text("cnc.recommendation"))}`;
-    if (fileAnalysisDrill.type === "missed") return `${bookingMeta(text("file.exactMistake"), conversation.reason)}${bookingMeta(text("file.revenueLoss"), formatCurrency(conversation.potentialRevenue || 0))}`;
+    if (fileAnalysisDrill.type === "revenue") return bookingMeta(text("file.revenueSource"), `${escapeHtml(conversation.source)} · ${formatCurrency(conversation.revenue)}`);
+    if (fileAnalysisDrill.type === "objections") return bookingMeta(text("file.objectionType"), escapeHtml(conversation.objections || "-"));
+    if (fileAnalysisDrill.type === "cnc") return `${bookingMeta(text("file.missingClose"), escapeHtml(conversation.reason))}${bookingMeta(text("file.recommendedNextStep"), escapeHtml(conversation.recommendation || text("cnc.recommendation")))}`;
+    if (fileAnalysisDrill.type === "missed") return `${bookingMeta(text("file.exactMistake"), escapeHtml(conversation.reason))}${bookingMeta(text("file.revenueLoss"), formatCurrency(conversation.potentialRevenue || 0))}`;
     if (fileAnalysisDrill.type === "confirmed") return bookingMeta(text("explorer.revenueValue"), formatCurrency(conversation.revenue));
-    if (fileAnalysisDrill.type === "recommendations") return bookingMeta(text("file.recommendations"), conversation.recommendation || (conversation.outcome === "cnc" ? text("cnc.recommendation") : conversation.reason));
-    return bookingMeta(text("file.reason"), conversation.reason);
+    if (fileAnalysisDrill.type === "recommendations") return bookingMeta(text("file.recommendations"), escapeHtml(conversation.recommendation || (conversation.outcome === "cnc" ? text("cnc.recommendation") : conversation.reason)));
+    return bookingMeta(text("file.reason"), escapeHtml(conversation.reason));
   };
   container.innerHTML = `
     <label class="search-box file-evidence-search">
       <span>${text("file.searchEvidence")}</span>
-      <input id="file-evidence-search" type="search" value="${fileAnalysisDrill.search}" placeholder="${text("file.searchEvidencePlaceholder")}" />
+      <input id="file-evidence-search" type="search" value="${escapeHtml(fileAnalysisDrill.search)}" placeholder="${text("file.searchEvidencePlaceholder")}" />
     </label>
     <div class="context-list">
     ${rows.length
     ? rows
         .map(
           (conversation) => `
-            <button class="booking-card drill-card" data-file-conversation="${conversation.id}" type="button">
+            <button class="booking-card drill-card" data-file-conversation="${escapeHtml(conversation.id)}" type="button">
               <div class="booking-card-main">
-                <h5>${conversation.id} · ${text(`outcomes.${conversation.outcome}`)}</h5>
-                <span>${conversation.source} · ${conversation.employee}</span>
+                <h5>${escapeHtml(conversation.id)} · ${text(`outcomes.${conversation.outcome}`)}</h5>
+                <span>${escapeHtml(conversation.source)} · ${escapeHtml(conversation.employee)}</span>
               </div>
               <div class="booking-meta-grid">
-                ${bookingMeta(text("bookings.source"), conversation.source)}
-                ${bookingMeta(text("bookings.employee"), conversation.employee)}
+                ${bookingMeta(text("bookings.source"), escapeHtml(conversation.source))}
+                ${bookingMeta(text("bookings.employee"), escapeHtml(conversation.employee))}
                 ${evidenceDetail(conversation)}
               </div>
             </button>
@@ -2124,7 +2124,7 @@ window.OwnerPlatform = {
   refreshDashboard: () => renderDashboard(),
 };
 
-const API_BASE_URL = "https://my-server-production-0e71.up.railway.app";
+const API_BASE_URL = window.OWNER_PLATFORM_API_BASE_URL;
 
 // بيعرض اسم اليوزر المسجل دخول وبيوصل زرار تسجيل الخروج
 function setupAuthUI() {

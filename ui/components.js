@@ -1,3 +1,7 @@
+const HTML_ESCAPES = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+
+export const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => HTML_ESCAPES[char]);
+
 export const bookingMeta = (label, value) => `
   <div>
     <span>${label}</span>
