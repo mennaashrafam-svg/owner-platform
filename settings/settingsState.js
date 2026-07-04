@@ -3,7 +3,7 @@ export const createInitialAppState = (data) => ({
   view: "dashboard",
   theme: "light",
   selectedConversationId: data.conversations[0]?.id,
-  dateRange: { from: "2026-05-01", to: "2026-05-27" },
+  dateRange: { from: "", to: "" },
   agentOverrides: {},
   searchQuery: "",
   bookingDrill: {

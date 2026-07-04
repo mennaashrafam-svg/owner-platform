@@ -25,7 +25,7 @@ export const createPlatformDataStore = (initialData) => {
       return current;
     },
     async loadFromApi(url, options = {}) {
-      const apiUrl = url || "https://my-server-production-0e71.up.railway.app/api/conversations";
+      const apiUrl = url || `${window.OWNER_PLATFORM_API_BASE_URL}/api/conversations`;
       const token = localStorage.getItem("token");
       const response = await fetch(apiUrl, {
         headers: { 
