@@ -2181,6 +2181,143 @@ function showRealDataBanner(count) {
 }
 
 // جيب البيانات الحقيقية من السيرفر لو فيه token
+// أسماء عرض المنصات بلغتين، تُستخدم في تحويل المحادثات الحقيقية
+const REAL_PLATFORM_LABELS = {
+  whatsapp: { en: "WhatsApp", ar: "واتساب" },
+  instagram: { en: "Instagram", ar: "إنستغرام" },
+  facebook: { en: "Facebook", ar: "فيسبوك" },
+  tiktok: { en: "TikTok", ar: "تيك توك" },
+  google: { en: "Google", ar: "Google" },
+  snapchat: { en: "Snapchat", ar: "سناب شات" },
+};
+
+// يحوّل تصنيف السيرفر الحقيقي (Confirmed/CNC/...) لتسمية معروضة بلغتين
+const REAL_OUTCOME_STATUS = {
+  Confirmed: { en: "Confirmed", ar: "مؤكد" },
+  Pending: { en: "Pending", ar: "قيد الانتظار" },
+  CNC: { en: "Not closed", ar: "لم يُغلق" },
+  Cancelled: { en: "Cancelled", ar: "ملغي" },
+  ObjectionOnly: { en: "Objection", ar: "اعتراض" },
+  InfoOnly: { en: "Info only", ar: "استفسار فقط" },
+};
+
+// يحوّل محادثة حقيقية واحدة (جاية من /api/conversations) لشكل "حجز" متوافق
+// مع محرك المؤشرات الحالي. الحقول اللي معندناش تحليل ذكاء اصطناعي متقدم ليها
+// (مستوى الاهتمام، تحليل المشاعر، التوصية...) بتتحط بصراحة "-" بدل ما تُختلق.
+function mapRealConversationToBooking(conv) {
+  const clientName = conv.name || (currentLang === "ar" ? "عميل" : "Client");
+  const message = conv.message || "-";
+  const time = conv.created_at ? new Date(conv.created_at).toISOString().slice(11, 16) : "-";
+  const booking = {
+    id: `RC-${conv.id}`,
+    client: { en: clientName, ar: clientName },
+    employee: { en: conv.employee || "-", ar: conv.employee || "-" },
+    time,
+    score: typeof conv.score === "number" ? conv.score : 0,
+    date: conv.date || (conv.created_at ? conv.created_at.slice(0, 10) : ""),
+    phone: "-",
+    revenue: Number(conv.revenue) || 0,
+    status: REAL_OUTCOME_STATUS[conv.outcome] || { en: "Pending", ar: "قيد الانتظار" },
+    report: {
+      summary: { en: message, ar: message },
+      interest: { en: "-", ar: "-" },
+      response: { en: "-", ar: "-" },
+      bookingQuality: { en: "-", ar: "-" },
+      missed: { en: "-", ar: "-" },
+      objections: { en: "-", ar: "-" },
+      sentiment: { en: "-", ar: "-" },
+      notes: {
+        en: "Not analyzed with advanced AI yet.",
+        ar: "لم يتم تحليل هذه المحادثة بتحليل ذكاء اصطناعي متقدم بعد.",
+      },
+      recommendation: { en: "-", ar: "-" },
+      messages: {
+        en: [["Client", message]],
+        ar: [["العميل", message]],
+      },
+    },
+  };
+  booking.outcome = getConversationOutcome(booking);
+  return booking;
+}
+
+// يحوّل نفس المحادثة الحقيقية لشكل سجل "تحليل المحادثة" المسطّح
+// (المستخدم في صفحة Conversation Analysis)
+function mapRealConversationToAnalysisRecord(conv) {
+  const clientName = conv.name || (currentLang === "ar" ? "عميل" : "Client");
+  const message = conv.message || "-";
+  const time = conv.created_at ? new Date(conv.created_at).toISOString().slice(11, 16) : "-";
+  const platformLabel = REAL_PLATFORM_LABELS[conv.platform] || { en: conv.platform || "-", ar: conv.platform || "-" };
+  const booking = mapRealConversationToBooking(conv);
+  const isMissed = booking.outcome === "missed";
+  const isConfirmedOrPending = booking.outcome === "confirmed" || booking.outcome === "pending";
+
+  return {
+    id: `RC-${conv.id}`,
+    patient: { en: clientName, ar: clientName },
+    channel: platformLabel,
+    procedure: { en: "Real conversation", ar: "محادثة حقيقية" },
+    time,
+    score: booking.score,
+    bookingAttempt: isConfirmedOrPending,
+    missedOpportunity: isMissed,
+    value: booking.revenue > 0 ? `AED ${booking.revenue}` : "-",
+    sentiment: { en: "-", ar: "-" },
+    summary: { en: message, ar: message },
+    recommendations: { en: [], ar: [] },
+    signals: {
+      en: [["Client", message]],
+      ar: [["العميل", message]],
+    },
+  };
+}
+
+// يدمج المحادثات الحقيقية جوه هيكل بيانات الداشبورد (bookingSources + conversations)
+// من غير ما يلمس المنصات اللي مفيهاش نشاط حقيقي بعد
+function mergeRealConversationsIntoDashboard(conversations) {
+  const currentData = platformStore.get();
+  const nextData = JSON.parse(JSON.stringify(currentData));
+
+  const byPlatform = new Map();
+  for (const conv of conversations) {
+    const key = conv.platform || "whatsapp";
+    if (!byPlatform.has(key)) byPlatform.set(key, []);
+    byPlatform.get(key).push(conv);
+  }
+
+  nextData.bookingSources = nextData.bookingSources.map((platformEntry) => {
+    const realForPlatform = byPlatform.get(platformEntry.id);
+    if (!realForPlatform || realForPlatform.length === 0) return platformEntry;
+
+    const bookings = realForPlatform.map(mapRealConversationToBooking);
+    return {
+      ...platformEntry,
+      sources: [
+        {
+          id: `${platformEntry.id}-live`,
+          type: "liveConversations",
+          contents: [
+            {
+              id: `${platformEntry.id}-live-thread`,
+              contentType: "live",
+              title: { en: "Live conversations", ar: "محادثات حقيقية" },
+              detail: {
+                en: "Real messages received from your connected account",
+                ar: "رسائل حقيقية وصلت من حسابك المرتبط",
+              },
+              bookings,
+            },
+          ],
+        },
+      ],
+    };
+  });
+
+  nextData.conversations = conversations.map(mapRealConversationToAnalysisRecord);
+
+  return nextData;
+}
+
 async function loadRealConversations() {
   const token = localStorage.getItem("token");
   if (!token) return;
@@ -2199,6 +2336,8 @@ async function loadRealConversations() {
     const conversations = await res.json();
     if (Array.isArray(conversations) && conversations.length > 0) {
       showRealDataBanner(conversations.length);
+      const merged = mergeRealConversationsIntoDashboard(conversations);
+      await replacePlatformData(merged);
     }
     return conversations;
   } catch (err) {
@@ -2516,6 +2655,7 @@ const translations = exports.translations = {
     "explorer.qualityValue": "Quality score",
     "explorer.recommendationValue": "Recommendation",
     "content.campaign": "Campaign name",
+    "content.live": "Live conversation",
     "content.reel": "Post / Reel name",
     "content.video": "Video name",
     "content.comment": "Comment source",
@@ -2528,6 +2668,7 @@ const translations = exports.translations = {
     "content.story": "Story traffic",
     "content.swipe": "Swipe-up traffic",
     "sources.paidCampaign": "Paid Campaign",
+    "sources.liveConversations": "Live conversations",
     "sources.organicDm": "Organic DM",
     "sources.commentReply": "Comment Reply",
     "sources.storyReply": "Story Reply",
@@ -2848,6 +2989,7 @@ const translations = exports.translations = {
     "explorer.qualityValue": "درجة الجودة",
     "explorer.recommendationValue": "التوصية",
     "content.campaign": "اسم الحملة",
+    "content.live": "محادثة مباشرة",
     "content.reel": "اسم المنشور أو الريل",
     "content.video": "اسم الفيديو",
     "content.comment": "مصدر التعليق",
@@ -2860,6 +3002,7 @@ const translations = exports.translations = {
     "content.story": "حركة من القصة",
     "content.swipe": "حركة السحب للأعلى",
     "sources.paidCampaign": "حملة مدفوعة",
+    "sources.liveConversations": "محادثات حقيقية",
     "sources.organicDm": "رسائل عضوية",
     "sources.commentReply": "رد على تعليق",
     "sources.storyReply": "رد على قصة",
@@ -3438,7 +3581,7 @@ const createInitialAppState = exports.createInitialAppState = (data) => ({
   view: "dashboard",
   theme: "light",
   selectedConversationId: data.conversations[0]?.id,
-  dateRange: { from: "2026-05-01", to: "2026-05-27" },
+  dateRange: { from: "", to: "" },
   agentOverrides: {},
   searchQuery: "",
   bookingDrill: {
