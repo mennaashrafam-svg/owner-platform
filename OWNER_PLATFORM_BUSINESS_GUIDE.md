@@ -3,8 +3,8 @@
 # Business Guide
 
 Document status: Current product guide  
-Repository state reviewed: June 9, 2026  
-Current stage: Business intelligence MVP using demonstration data
+Repository state reviewed: July 4, 2026  
+Current stage: Early production system. Authentication, the database, and a real WhatsApp/Instagram webhook integration are live. Some analytics (employee attribution, revenue extraction, and multi-message conversation grouping for real conversations) are still placeholders pending real customer usage data.
 
 ## What Is Owner Platform?
 
@@ -26,7 +26,7 @@ The platform is built around a simple idea:
 
 An owner should not have to trust a number without understanding where it came from.
 
-The current product is an MVP. It demonstrates the intended experience using structured test data and uploaded conversation files. Real social media, messaging, payment, and CRM connections are not yet active.
+The current product has moved beyond pure demonstration. WhatsApp and Instagram messages are received through a real, signature-verified webhook connection and appear on the live dashboard. Facebook, TikTok, Google, Snapchat, payment, and CRM connections are not yet active. Employee attribution, revenue extraction, and grouping multiple messages into one evolving conversation are still placeholders for real conversations, pending real customer usage data to inform the design.
 
 ## Why Was It Created?
 
@@ -88,7 +88,7 @@ Owner Platform is intended for:
 - Marketing managers.
 - Partners and investors reviewing business performance.
 
-The long-term product is intended to be business-neutral. The current demonstration data still includes some clinic and medical examples because the MVP began with that use case.
+The long-term product is intended to be business-neutral. The earlier demonstration data (which included clinic and medical examples from the original MVP use case) has been removed; the dashboard now starts empty and only shows conversations from connected real accounts.
 
 ## How Owners Use The Platform
 
@@ -118,7 +118,7 @@ The owner can also:
 
 ## Dashboard Explanation
 
-The dashboard uses demonstration data and reflects the selected date range.
+The dashboard reflects the selected date range. It starts empty for a new account and populates with real WhatsApp/Instagram conversations as they arrive. Some analytics below still use score-based or placeholder logic rather than fully explicit evidence, described in each section.
 
 ### Business Health
 
@@ -343,9 +343,7 @@ Every result can be opened to inspect the original source text and classificatio
 
 Analyze File does not add uploaded conversations to the live dashboard.
 
-Current limitation:
-
-The interface mentions PDF and DOCX, but true PDF and DOCX extraction is not yet implemented. Uploaded content must currently be readable as text.
+TXT, CSV, real PDF, real DOCX, and ZIP files are all genuinely parsed: PDF and DOCX text is extracted using the browser's native decompression support, not just plain-text reading.
 
 ## Search
 
@@ -423,45 +421,44 @@ The platform should explain the business without forcing the owner to study a co
 
 ### Implemented Today
 
-- Interactive demonstration dashboard.
-- Six platform intelligence structures.
+- Real owner account authentication (register, login, password reset by email).
+- Real WhatsApp and Instagram webhook connection, verified against Meta's signature, storing real customer conversations in a persistent database.
+- Real-time dashboard population from those live conversations (KPIs, Business Health, Platform Performance, Risk Center, and drill-downs all reflect real data once it arrives).
+- Real, persistent team management (add/remove employees) and platform connection settings.
+- Six platform intelligence structures (four currently reachable by real data: WhatsApp, Instagram, Facebook, TikTok; Google and Snapchat remain placeholders).
 - Date filtering.
 - Bilingual English and Arabic interface.
 - RTL Arabic mode.
 - Light, dark, and automatic themes.
-- Search across demonstration conversations.
-- Employee intelligence.
-- Risk Center.
-- Alerts.
-- KPI drill-downs.
+- Search across live conversations.
+- Employee intelligence, Risk Center, Alerts, KPI drill-downs (operating on real data when present, otherwise showing an honest empty state).
 - Conversation reports and full conversation view.
-- Analyze File text validation.
+- Analyze File text, CSV, real PDF/DOCX (via browser decompression), and ZIP validation.
 - Privacy masking demonstration.
-- Team management demonstration.
 
 ### Partially Implemented
 
-- Evidence-first analytics.
-- Employee performance measurement.
+- Evidence-first analytics for real conversations: employee attribution, revenue extraction, and grouping multiple messages into one evolving conversation are still placeholders (real conversations show "-" rather than invented values).
+- Employee performance measurement (still based on the same score-derived logic as before; not yet measuring real response time).
 - Risk analysis.
 - Privacy Center.
-- Settings.
-- Platform connections.
-- File format support.
+- Settings (most toggles outside team/platform connections are still session-only).
+- Platform connections (WhatsApp/Instagram receive real data; Facebook, TikTok, Google, Snapchat are placeholders).
 
-These areas work as an MVP demonstration but require stronger data, persistence, or integrations.
+These areas now run on a real backend but still require stronger data, measurement, or additional integrations.
 
 ### Planned, Not Yet Implemented
 
-- Real WhatsApp, Instagram, Facebook, TikTok, Google, and Snapchat connections.
+- Real Facebook, TikTok, Google, and Snapchat connections (WhatsApp and Instagram are already real).
 - Real CRM, invoice, accounting, and payment connections.
 - Confirmed collected revenue.
 - Real-time notifications.
-- Authentication and employee access control.
+- Per-employee staff login and access control (the current authentication is for the business owner account only).
 - Persistent audit logs.
 - Production privacy and encryption.
 - Live multi-business deployment.
 - Production-grade intelligent analysis.
+- Automated test coverage, CI, and production monitoring.
 
 ## Future Vision
 
@@ -489,7 +486,7 @@ No. It is designed as an owner-focused conversation intelligence platform. It ma
 
 ### Does the platform connect to real social media accounts today?
 
-No. The current repository contains placeholder integration structures and demonstration connection cards only.
+Partially. WhatsApp and Instagram connect through a real, signature-verified Meta webhook, and real messages appear on the dashboard. Facebook, TikTok, Google, and Snapchat remain placeholder connection cards.
 
 ### Is the revenue number confirmed money received?
 
@@ -513,15 +510,15 @@ Yes. Search is designed to work independently of the selected UI language and su
 
 ### Can I upload PDF or DOCX files?
 
-The interface currently lists them, but true binary PDF and DOCX extraction is not implemented. Plain-text exports and basic CSV are the reliable current formats.
+Yes. PDF and DOCX text is genuinely extracted (including compressed content) using the browser's native decompression support, not just plain-text reading.
 
 ### Is customer data secure?
 
-The MVP demonstrates masking and reveal logging. Production-grade security, authentication, encryption, and access control are not yet implemented.
+Real account authentication (password hashing, signed session tokens) and a signature-verified webhook are implemented. Customer-data masking and reveal logging are still demonstration-only, and there is no encryption at rest, per-employee access control, or persistent audit log yet.
 
 ### Can settings be saved?
 
-Team changes work during the current browser session. Most settings and toggles are not persisted after reload.
+Team members and platform connection credentials are saved to a real database and persist across sessions. Most other settings and toggles in the Settings page are still demonstration-only and do not persist after reload.
 
 ### Does the platform use artificial intelligence?
 
@@ -529,7 +526,7 @@ The current repository mainly uses structured mock reports, deterministic calcul
 
 ### Is the platform ready for production?
 
-No. It is an advanced MVP intended for product validation, demonstrations, parser testing, and preparation for future integrations.
+Closer than before, but not fully. Real authentication, a real database, and a real WhatsApp/Instagram integration exist. It is not yet ready for full production reliance: there is no automated test suite, no CI pipeline, and no production monitoring, and some real-conversation analytics (employee attribution, revenue extraction, multi-message conversation grouping) are still placeholders.
 
 ## Investor Overview
 
@@ -572,7 +569,7 @@ The platform's intended differentiators are:
 
 ### Current Investment Stage
 
-The current repository is an advanced static MVP. It demonstrates the product vision and interaction system but does not yet have production integrations, persistent infrastructure, or live customers represented in the codebase.
+The repository has moved from a static MVP to an early production system: it has persistent infrastructure (a PostgreSQL database behind an Express backend), real owner authentication, and one live, signature-verified integration (WhatsApp and Instagram via a Meta webhook). It does not yet have automated testing, CI, production monitoring, or live paying customers represented in the codebase.
 
 ### Future Opportunities
 
@@ -586,4 +583,4 @@ The current repository is an advanced static MVP. It demonstrates the product vi
 
 ### Key Execution Requirement
 
-The most important next step is not adding more interface features. It is proving trustworthy analytics with real source data, explicit outcomes, secure infrastructure, and one complete integration from conversation to verified business result.
+The most important next step is not adding more interface features. One real, signature-verified integration (WhatsApp/Instagram) now exists end-to-end from conversation to dashboard. What remains is proving trustworthy analytics on top of it: real employee attribution, real revenue extraction, evidence-first conversation grouping, automated testing, and production monitoring.
