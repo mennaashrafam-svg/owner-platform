@@ -148,6 +148,12 @@ Raw future integration
     -> integrations/*Adapter.js
     -> unified internal model
     -> analysis/search/UI
+
+Real WhatsApp/Instagram message (Meta webhook)
+    -> my-server (Express, separate repo) -> PostgreSQL
+    -> GET /api/conversations
+    -> app.js mergeRealConversationsIntoDashboard
+    -> same dashboard/metrics engine as mock data
 ```
 
 ## Important Architecture Boundaries
@@ -155,6 +161,10 @@ Raw future integration
 - Live dashboard classification and Analyze File classification are currently separate systems.
 - Uploaded test files never enter live dashboard data.
 - `app.bundle.js` is generated output; source changes belong in modular files.
-- Application state is in memory and resets on reload.
-- There is no backend, database, authentication, or real integration.
+- Most UI state (language, theme, most Settings toggles) is in memory and resets on reload.
+  Team members and platform connections persist in the backend database.
+- There is now a real backend, database, and authentication layer (a separate repository,
+  `my-server`: Express + PostgreSQL, deployed on Railway). WhatsApp and Instagram are real,
+  signature-verified integrations via a Meta webhook. Facebook, TikTok, Google, and Snapchat
+  remain placeholder integrations.
 

@@ -1,5 +1,15 @@
 # Dependencies
 
+## Backend
+
+This document covers the frontend repository only. The frontend now talks to a real backend
+(a separate repository, `my-server`: Express + PostgreSQL, deployed on Railway) for
+authentication, team management, platform connections, and real WhatsApp/Instagram
+conversation data. See that repository's own `README.md` and `MIGRATIONS.md` for its
+dependencies (Express, pg, jsonwebtoken, bcryptjs, cors, dotenv, node-pg-migrate).
+
+The frontend itself remains dependency-free, as described below.
+
 ## Runtime Frameworks
 
 None.
@@ -64,16 +74,16 @@ Font files are not bundled. Rendering depends on fonts available in the host env
 
 ## External Service Requirements
 
-None for the current MVP.
+- The backend (`my-server`) is a required external service now, not optional. The frontend
+  reads its URL from `config.js` (`window.OWNER_PLATFORM_API_BASE_URL`).
+- WhatsApp and Instagram connect through a real, signature-verified Meta webhook (handled by
+  the backend).
+- Resend is used by the backend for password-reset emails.
 
-The following are planned but not connected:
+The following are still planned but not connected:
 
-- Facebook.
-- Instagram.
-- TikTok.
-- Google.
-- WhatsApp.
-- Snapchat.
+- Facebook, TikTok, Google, Snapchat (as real messaging integrations — placeholder connection
+  cards only).
 - CRM systems.
 - Invoice systems.
 - Accounting systems.
@@ -81,5 +91,7 @@ The following are planned but not connected:
 
 ## Persistence Requirements
 
-None currently. All state is in memory and resets on reload.
+Team members and platform connection credentials persist in the backend's PostgreSQL
+database. Most other frontend state (language, theme, most Settings toggles) is still
+in-memory only and resets on reload.
 

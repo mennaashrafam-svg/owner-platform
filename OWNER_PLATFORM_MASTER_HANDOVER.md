@@ -3,32 +3,39 @@
 # Master Technical Handover
 
 Document status: Current repository handover  
-Repository state reviewed: June 9, 2026  
-Project stage: Static browser MVP / product validation prototype  
-Production readiness: Not production-ready
+Repository state reviewed: July 5, 2026  
+Project stage: Early production system (real auth, backend, and one live integration) with some analytics still prototype-level  
+Production readiness: Not fully production-ready — see "Still Not Started" further down for the concrete remaining gaps
 
 ## Executive Summary
 
-Owner Platform by Smart INV is a bilingual business conversation intelligence MVP designed to help business owners understand the commercial truth behind customer conversations.
+Owner Platform by Smart INV is a bilingual business conversation intelligence platform designed to help business owners understand the commercial truth behind customer conversations.
 
 The platform organizes conversation-derived business information into an evidence-first investigation journey:
 
 `Number -> Platform -> Source -> Campaign or Content -> Employee -> Conversation -> Platform Analysis -> Full Conversation`
 
-The current project is a static browser application built with HTML, CSS, and modular JavaScript. It uses structured mock data for the live dashboard and a separate rule-based parser for uploaded conversation test files. It does not currently connect to real platform APIs, databases, authentication systems, payment systems, or external analysis services.
+The frontend is a static browser application (HTML, CSS, modular JavaScript). It is backed by
+a real Express + PostgreSQL server (`my-server`, a separate repository, deployed on Railway)
+providing owner-account authentication, persistent team/platform-connection storage, and a
+real, signature-verified Meta webhook that ingests WhatsApp and Instagram conversations. Live
+dashboard data now starts empty for a new account and fills in from that real webhook data
+instead of demonstration content. A separate rule-based parser still handles uploaded
+Analyze File conversation test files. Facebook, TikTok, Google, Snapchat, payment systems, and
+external AI/ML analysis services are not connected.
 
-The MVP demonstrates the intended product experience, bilingual interface, drill-down architecture, search behavior, Analyze File validation workflow, employee intelligence, risk investigation, settings, and privacy concepts.
+The product demonstrates the intended product experience, bilingual interface, drill-down architecture, search behavior, Analyze File validation workflow, employee intelligence, risk investigation, settings, and privacy concepts, now running against real conversation data where available.
 
 Current maturity level:
 
-- Product concept and interaction model: Advanced MVP
-- Frontend usability and visual design: Functional MVP
-- Evidence drill-down: Implemented for most core journeys
-- File parser validation: Implemented with automated fixtures
-- Live analytics accuracy: Prototype-level
-- Integrations and persistence: Architectural placeholders only
-- Security and privacy enforcement: Demonstration only
-- Production operations: Not started
+- Product concept and interaction model: Advanced.
+- Frontend usability and visual design: Functional.
+- Evidence drill-down: Implemented for most core journeys, working against real conversation data.
+- File parser validation: Implemented with automated fixtures.
+- Live analytics accuracy: Business-outcome classification (booking/CNC/missed) is still score-derived rather than evidence-explicit; employee attribution and revenue extraction for real conversations are not implemented yet (deliberately deferred pending real usage data).
+- Integrations and persistence: WhatsApp/Instagram are real; Facebook/TikTok/Google/Snapchat remain architectural placeholders. Team members and platform connections persist in Postgres.
+- Security and privacy enforcement: Real password hashing, signed sessions, and webhook signature verification exist. Customer-data masking/reveal-logging, encryption at rest, and per-employee access control are still demonstration-only or not started.
+- Production operations: Automated tests (35, backend), CI (both repos), structured logging, a `/health` endpoint, and versioned database migrations are in place. No production monitoring/alerting service, no browser/e2e test suite, and no formal compliance audit yet.
 
 ## Project Vision
 
@@ -109,30 +116,41 @@ This principle is strongly represented in the UI, but some live dashboard metric
 
 ### Current Architecture
 
-The project is a dependency-free static web application.
+This repository (the frontend) is a dependency-free static web application. It is no longer
+the whole system: a separate repository, `my-server` (Express + PostgreSQL, deployed on
+Railway), provides a real backend — authentication, team/platform-connection persistence, and
+a signature-verified Meta webhook for WhatsApp/Instagram. The frontend reads the backend's URL
+from `config.js`.
 
 - `index.html` provides the application shell and primary views.
 - `styles.css` contains the complete visual system, themes, responsive rules, and typography.
 - `app.js` orchestrates state, rendering, navigation, interactions, filters, and drill-downs.
 - Feature logic is separated into data, analysis, search, privacy, settings, UI helper, integration, and translation modules.
-- `app.bundle.js` is a generated browser bundle for environments that do not load JavaScript modules directly.
+- `app.bundle.js` is a generated browser bundle for environments that do not load JavaScript modules directly, rebuilt from source on every commit (via a local pre-commit hook and enforced again in CI).
+- Auth pages (`login.html`, `register.html`, etc.), `employees.html`, and `settings-connect.html` call the real backend directly.
 
-There is no backend, API server, database, package manager configuration, authentication layer, or deployment pipeline in the repository.
+This repository itself has no package manager manifest, build framework, or server process —
+those live in `my-server`, which has its own dependencies, tests, CI, and migrations (see its
+`README.md` and `MIGRATIONS.md`).
 
 ### Major Modules
 
-- Data layer: structured mock platforms, bookings, reports, employees, settings, and canonical model descriptions.
-- Analysis layer: live dashboard metrics, score-derived outcomes, employee/platform performance, alerts, agent detection, and uploaded-file parsing.
+- Data layer: `data/mockData.js` now holds only empty platform shells (Instagram/TikTok/WhatsApp/Facebook with no sources) plus shared date/model helpers — demonstration bookings, reports, and clinic-specific content have been removed. The dashboard starts empty and is populated by real conversation data instead.
+- Analysis layer: live dashboard metrics, score-derived outcomes, employee/platform performance, alerts, agent detection, and uploaded-file parsing (including real PDF/DOCX/ZIP text extraction via the browser's `DecompressionStream`).
 - Search layer: bilingual normalization, alias expansion, corpus construction, result filtering, and matched snippets.
 - UI orchestration: view rendering, modal drill-down state, event delegation, date filtering, language/theme switching, and settings interactions.
 - Privacy layer: masking helpers and an in-memory sensitive reveal audit log.
-- Integration layer: placeholder adapters for future platform and revenue integrations.
+- Integration layer: placeholder adapters for Facebook/TikTok/Google/Snapchat revenue integrations. WhatsApp/Instagram are real via the backend webhook, not through these adapters.
 
 ### Current Data Flow
 
-Live dashboard flow:
+Real conversation flow (WhatsApp/Instagram):
 
-`data/mockData.js -> analysis/metrics.js and analysis/alerts.js -> app.js renderers -> UI drill-downs`
+`Meta webhook -> my-server (Express) -> PostgreSQL -> GET /api/conversations -> app.js mergeRealConversationsIntoDashboard -> same dashboard/metrics engine as demo data`
+
+Live dashboard flow (still used for any remaining demo-shaped rendering paths):
+
+`data/mockData.js (now empty shells) -> analysis/metrics.js and analysis/alerts.js -> app.js renderers -> UI drill-downs`
 
 Search flow:
 
@@ -142,11 +160,11 @@ Analyze File flow:
 
 `Uploaded text content -> analysis/fileParser.js -> isolated parsed conversations and summary -> evidence modal`
 
-Future integration flow:
+Future integration flow (Facebook/TikTok/Google/Snapchat):
 
 `Raw platform payload -> integrations adapter -> unified internal model -> analysis modules -> UI`
 
-The future integration flow is only architectural intent. Current adapters return raw payloads unchanged.
+The future integration flow is only architectural intent for those four platforms. Current adapters for them return raw payloads unchanged.
 
 ## Folder Structure
 
@@ -866,33 +884,47 @@ A production implementation should:
 - Search context: matching is contextual, but employee summary navigation needs correction.
 - Platform intelligence: all six platforms exist, but some empty-outcome drill-down paths can dead-end.
 
-### Not Started
+### Done Since This Section Was Written
 
-- Real platform API integrations.
-- Backend services and database.
-- Authentication and authorization.
-- Persistent settings and audit logs.
-- Production ingestion pipelines.
-- Real-time monitoring and notifications.
-- Real response-time measurement.
-- Real confirmed revenue connections.
-- Production AI or machine-learning analysis service.
-- Multi-tenant architecture.
-- Deployment pipeline, observability, and operational monitoring.
-- Automated browser/end-to-end test suite.
+- Backend services and database (Express + PostgreSQL, `my-server`).
+- Owner-account authentication and authorization (register/login/password reset).
+- Real platform API integration for WhatsApp and Instagram (signature-verified Meta webhook, production ingestion pipeline).
+- Persistent team members and platform connections (not yet: most other settings, audit logs).
+- Basic real-time health monitoring (`GET /health`) and structured JSON logging (not yet: alerting/notifications).
+- Deployment pipeline basics: CI on both repos (syntax checks, automated tests, bundle-freshness check).
+- Automated test suite for the backend (35 tests via `node:test`) — not yet a browser/end-to-end suite for the frontend.
+- Versioned database migrations (`node-pg-migrate`), verified against production.
+
+### Still Not Started
+
+- Real platform API integrations for Facebook, TikTok, Google, Snapchat.
+- Per-employee staff login and access control (only the business owner account can log in today).
+- Real response-time measurement (employee metrics are still score-derived proxies).
+- Real confirmed revenue connections (and revenue extraction/employee attribution for real WhatsApp/Instagram conversations specifically — deferred on purpose until real customer usage data exists).
+- Production AI or machine-learning analysis service (classification is still rule-based).
+- Multi-tenant architecture (single business owner model).
+- Full observability (dashboards/alerting beyond the basic health endpoint and JSON logs).
+- Automated browser/end-to-end test suite for the frontend.
 - Formal accessibility, security, privacy, and compliance audits.
 
 ## Known Issues
 
 ### High Priority
 
-1. Live outcome classification is based only on score thresholds and conflicts with the raw Confirmed status stored on every mock row.
+Items 1 and 4 below described the old mock dataset and are now resolved or moot: demo
+bookings were removed, and the live dashboard and Conversation Analysis page are now driven
+by the same real conversation source, so they can no longer disagree on totals. Item 1's
+underlying concern (score-derived outcome classification instead of explicit evidence) still
+applies to real conversation data, since `getConversationOutcome` is unchanged.
+
+1. ~~Live outcome classification is based only on score thresholds and conflicts with the raw Confirmed status stored on every mock row.~~ Mock rows are gone; real conversations are still classified by the same score thresholds via `getConversationOutcome`, which remains a prototype rather than evidence-based detection.
 2. Employee response speed is inferred from score or booking time-of-day rather than response latency.
 3. Employee response quality is represented by average conversation score.
-4. Conversation Analysis contains four records while the dashboard contains 29 platform conversation rows.
+4. ~~Conversation Analysis contains four records while the dashboard contains 29 platform conversation rows.~~ Resolved: both now come from the same real `/api/conversations` data.
 5. Employee search summary navigation opens one conversation instead of the dedicated employee overview.
 6. Platform drill-down can dead-end when a platform has no rows for the default Confirmed Bookings metric.
 7. Objection count semantics are not consistently named across parser fixtures and reports.
+8. Real conversations never get an employee assignment or contribute extracted revenue, and every inbound message is its own row instead of being grouped into one evolving conversation — deliberately deferred until real customer usage data exists to inform the design.
 
 ### Medium Priority
 
@@ -900,20 +932,20 @@ A production implementation should:
 2. Business settings and connection cards are static.
 3. The employee report label says Confirmed Bookings Today even for custom date ranges.
 4. Platform Response Quality displays overall outcome performance.
-5. Analyze File advertises PDF and DOCX, but binary extraction is not implemented.
+5. ~~Analyze File advertises PDF and DOCX, but binary extraction is not implemented.~~ Resolved: real PDF/DOCX/ZIP text extraction now works via the browser's native `DecompressionStream`, verified against a real deflate-compressed DOCX fixture.
 6. Recommendation report totals are not clearly modeled.
 7. Ask Platform is a small keyword-based demo rather than an evidence-query system.
 
 ### Technical Debt
 
 - `app.js` is still large and combines many renderers and interaction handlers.
-- `data/mockData.js` contains very long inline records and historical clinic-specific wording.
-- `analysis/reports.js` duplicates some function names found in `analysis/metrics.js`.
+- ~~`data/mockData.js` contains very long inline records and historical clinic-specific wording.~~ Resolved: it now holds only empty platform shells and shared date/model helpers.
+- `analysis/reports.js` duplicates some function names found in `analysis/metrics.js`, and is no longer imported by anything now that mock bookings are gone — a candidate for deletion.
 - Canonical models are descriptive arrays rather than enforced schemas or types.
-- No persistent state architecture exists.
-- No automated tests exist for live dashboard metrics, search, or drill-down behavior.
-- The generated `app.bundle.js` must be rebuilt after source changes.
-- The repository currently has no Git commits, tags, release history, or stable branch record.
+- Persistent state exists for team members and platform connections (backend Postgres); most other frontend UI state is still in-memory only.
+- Automated tests exist for the backend (35 tests). No automated tests exist yet for frontend live-dashboard metrics, search, or drill-down behavior.
+- The generated `app.bundle.js` must be rebuilt after source changes — enforced automatically now via a local pre-commit hook and a CI check that fails if the committed bundle doesn't match a fresh build from source.
+- ~~The repository currently has no Git commits, tags, release history, or stable branch record.~~ No longer true: the repository has an active commit history on `main`.
 - Historical preview images are stored at repository root and increase repository noise.
 
 ## Future Roadmap
@@ -1020,6 +1052,17 @@ All state is lost on page reload.
 - Ensure only Confirmed outcomes contribute to Estimated Revenue.
 
 ## Repository Audit
+
+**Audit update (2026-07-05):** the audit below is the original snapshot from June 9, 2026 and
+is kept for historical record, but several of its findings are now resolved: a real backend,
+authentication, and one live Meta webhook integration (WhatsApp/Instagram) exist; the
+repository has an active Git commit history; the Analyze File evidence-rendering XSS risk
+noted under "Potential Risks" has been fixed (untrusted fields are HTML-escaped before
+rendering); mock data and its clinic-specific content have been removed; and the live
+dashboard and Conversation Analysis page no longer disagree on totals, since both now read
+the same real conversation data. See the "Done Since This Section Was Written" list earlier
+in this document for the fuller picture. Score-derived outcome classification, employee
+attribution, and revenue extraction for real conversations remain open, per that same list.
 
 ### Audit Scope
 
