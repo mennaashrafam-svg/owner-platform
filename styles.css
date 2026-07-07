@@ -2032,6 +2032,58 @@ h1 {
   background: rgba(226, 243, 255, 0.62);
 }
 
+.reply-box {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.54);
+  box-shadow: var(--shadow-inner), var(--shadow-soft);
+}
+
+.reply-box-label {
+  display: grid;
+  gap: 6px;
+}
+
+.reply-box-label span {
+  color: var(--muted);
+  font-size: 0.66rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.reply-box-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.72);
+  font: inherit;
+  resize: vertical;
+}
+
+.reply-box-input:focus {
+  outline: 0;
+  border-color: rgba(36, 121, 216, 0.42);
+  box-shadow: 0 0 0 4px rgba(36, 121, 216, 0.1);
+}
+
+.reply-box-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.reply-box-status {
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
 .transcript-line-ai {
   border-style: dashed;
   background: rgba(255, 255, 255, 0.42);

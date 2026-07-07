@@ -1062,14 +1062,33 @@ function renderFullConversation(booking, report) {
             return `
               <div class="transcript-line transcript-line-${role}">
                 <div class="message-meta">
-                  <strong>${getMessageRoleLabel(role, speaker)}</strong>
+                  <strong>${escapeHtml(getMessageRoleLabel(role, speaker))}</strong>
                   <span>${messageTimestamp(booking.time, index)}</span>
                 </div>
-                <p>${line}</p>
+                <p>${escapeHtml(line)}</p>
               </div>
             `;
           })
           .join("")}
+      </div>
+      ${renderReplyBox(booking)}
+    </div>
+  `;
+}
+
+// مربع رد حقيقي، بيظهر بس لمحادثات واتساب الحقيقية اللي عندنا رقم عميلها
+// (booking.waId). المحادثات الوهمية أو اللي معندهاش رقم عميل معروف مالهاش رد.
+function renderReplyBox(booking) {
+  if (!booking.waId) return "";
+  return `
+    <div class="reply-box" data-reply-conversation-id="${escapeHtml(String(booking.realId))}">
+      <label class="reply-box-label">
+        <span>${text("report.replyLabel")}</span>
+        <textarea class="reply-box-input" data-reply-input rows="2" placeholder="${text("report.replyPlaceholder")}"></textarea>
+      </label>
+      <div class="reply-box-actions">
+        <span class="reply-box-status" data-reply-status></span>
+        <button class="text-button" type="button" data-reply-send>${text("report.replySend")}</button>
       </div>
     </div>
   `;
@@ -1927,6 +1946,12 @@ document.addEventListener("click", (event) => {
     renderSettings();
   }
 
+  const replySendButton = event.target.closest("[data-reply-send]");
+  if (replySendButton) {
+    const replyBox = replySendButton.closest("[data-reply-conversation-id]");
+    if (replyBox) sendConversationReply(replyBox);
+  }
+
   const fileAnalysisButton = event.target.closest("[data-file-analysis-type]");
   if (fileAnalysisButton) openFileAnalysisDetail(fileAnalysisButton.dataset.fileAnalysisType);
 
@@ -2202,6 +2227,8 @@ function mapRealConversationToBooking(conv) {
   const time = conv.created_at ? new Date(conv.created_at).toISOString().slice(11, 16) : "-";
   const booking = {
     id: `RC-${conv.id}`,
+    realId: conv.id,
+    waId: conv.wa_id || null,
     client: { en: clientName, ar: clientName },
     employee: { en: conv.employee || "-", ar: conv.employee || "-" },
     time,
@@ -2337,5 +2364,56 @@ async function loadRealConversations() {
     console.error("خطأ في جلب البيانات:", err);
   }
 }
+// بتبعت الرد فعليًا عن طريق السيرفر (اللي بيبعته بعدين لواتساب الحقيقي)، وبعد
+// النجاح بتضيف الرسالة لنفس المحادثة المفتوحة محليًا (optimistic update) عشان
+// المستخدم يشوفها فورًا من غير ما يستنى إعادة تحميل كاملة للبيانات.
+async function sendConversationReply(replyBox) {
+  const conversationId = replyBox.dataset.replyConversationId;
+  const textarea = replyBox.querySelector("[data-reply-input]");
+  const statusEl = replyBox.querySelector("[data-reply-status]");
+  const sendButton = replyBox.querySelector("[data-reply-send]");
+  const message = textarea?.value.trim();
+  if (!message) return;
+
+  const token = localStorage.getItem("token");
+  if (!token) {
+    window.location.replace("login.html");
+    return;
+  }
+
+  sendButton.disabled = true;
+  statusEl.textContent = text("report.replySending");
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/conversations/${conversationId}/reply`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ message }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data?.message || text("report.replyFailed"));
+
+    const booking = findBooking();
+    if (booking?.realId != null && String(booking.realId) === String(conversationId)) {
+      const entry = [currentLang === "ar" ? "أنتِ" : "You", message];
+      booking.report.messages.en = [...(booking.report.messages.en || []), entry];
+      booking.report.messages.ar = [...(booking.report.messages.ar || []), entry];
+      textarea.value = "";
+      renderBookingBreakdown();
+      return;
+    }
+
+    textarea.value = "";
+    statusEl.textContent = text("report.replySent");
+  } catch (err) {
+    statusEl.textContent = err.message || text("report.replyFailed");
+  } finally {
+    if (sendButton) sendButton.disabled = false;
+  }
+}
+
 window.loadRealConversations = loadRealConversations;
 bootstrapApp();
