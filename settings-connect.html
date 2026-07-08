@@ -89,9 +89,12 @@
     <h2>WhatsApp Business</h2>
     <p id="wa-desc">أدخل بيانات حساب واتساب بيزنس الخاص بك</p>
     <div class="status-badge" id="wa-status" hidden></div>
+    <button type="button" id="wa-fb-btn" onclick="launchWhatsAppEmbeddedSignup()">ربط واتساب عن طريق فيسبوك</button>
+    <div class="success" id="wa-fb-error" style="color:#f87171;"></div>
+    <p style="font-size:12px;color:#64748b;margin-top:16px;">أو الطريقة اليدوية (لو مش متاح الربط عن طريق فيسبوك حاليًا):</p>
     <input type="text" id="wa-token" placeholder="WhatsApp Access Token">
     <input type="text" id="wa-phone" placeholder="Phone Number ID">
-    <button type="button" id="wa-btn" onclick="saveWhatsapp()">ربط واتساب</button>
+    <button type="button" id="wa-btn" onclick="saveWhatsapp()">ربط واتساب يدويًا</button>
     <div class="success" id="wa-success">تم الربط بنجاح!</div>
   </div>
 
@@ -115,12 +118,112 @@
     <div class="success" id="fb-success">تم الربط بنجاح!</div>
   </div>
 
+  <div id="fb-root"></div>
   <script src="config.js"></script>
   <script>
     const API = window.OWNER_PLATFORM_API_BASE_URL;
     const token = localStorage.getItem("token");
 
     if (!token) window.location.href = "login.html";
+
+    // بيحمّل Facebook JavaScript SDK لو لسه مش متحمّل، ومحتاج له بس زرار "ربط
+    // عن طريق فيسبوك" (Embedded Signup)، فمش بنعطّل باقي الصفحة لو فشل تحميله.
+    window.fbAsyncInit = function () {
+      FB.init({
+        appId: window.OWNER_PLATFORM_META_APP_ID,
+        autoLogAppEvents: true,
+        xfbml: false,
+        version: "v21.0",
+      });
+    };
+    (function (d, s, id) {
+      if (d.getElementById(id)) return;
+      const fjs = d.getElementsByTagName(s)[0];
+      const js = d.createElement(s);
+      js.id = id;
+      js.src = "https://connect.facebook.net/en_US/sdk.js";
+      fjs.parentNode.insertBefore(js, fjs);
+    })(document, "script", "facebook-jssdk");
+
+    // بيلتقط waba_id وphone_number_id اللي Meta بتبعتهم عن طريق postMessage لما
+    // العميل يخلّص خطوات الربط جوه نافذة Embedded Signup.
+    let embeddedSignupSessionData = null;
+    window.addEventListener("message", (event) => {
+      if (!event.origin.endsWith("facebook.com")) return;
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === "WA_EMBEDDED_SIGNUP" && data.event === "FINISH") {
+          embeddedSignupSessionData = data.data;
+        }
+      } catch (err) {
+        // رسائل postMessage تانية من فيسبوك مش لازم تكون JSON، بنتجاهلها
+      }
+    });
+
+    function showEmbeddedSignupError(message) {
+      const errorEl = document.getElementById("wa-fb-error");
+      errorEl.textContent = message;
+      errorEl.style.display = message ? "block" : "none";
+    }
+
+    function launchWhatsAppEmbeddedSignup() {
+      showEmbeddedSignupError("");
+
+      const configId = window.OWNER_PLATFORM_WHATSAPP_SIGNUP_CONFIG_ID;
+      if (!configId) {
+        showEmbeddedSignupError("الربط عن طريق فيسبوك لسه مش جاهز، استخدمي الطريقة اليدوية تحت.");
+        return;
+      }
+      if (typeof FB === "undefined") {
+        showEmbeddedSignupError("تعذر تحميل مكتبة فيسبوك، جربي تحدّثي الصفحة.");
+        return;
+      }
+
+      embeddedSignupSessionData = null;
+      FB.login(
+        async (response) => {
+          const code = response?.authResponse?.code;
+          if (!code) {
+            showEmbeddedSignupError("لم تتم الموافقة على الربط.");
+            return;
+          }
+          if (!embeddedSignupSessionData?.waba_id || !embeddedSignupSessionData?.phone_number_id) {
+            showEmbeddedSignupError("تعذر الحصول على بيانات حساب واتساب، جربي تاني.");
+            return;
+          }
+
+          try {
+            const res = await fetch(`${API}/api/whatsapp/embedded-signup/callback`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({
+                code,
+                wabaId: embeddedSignupSessionData.waba_id,
+                phoneNumberId: embeddedSignupSessionData.phone_number_id,
+              }),
+            });
+            const body = await res.json().catch(() => ({}));
+            if (!res.ok) {
+              showEmbeddedSignupError(body.message || "فشل الربط، جربي تاني.");
+              return;
+            }
+            document.getElementById("wa-success").style.display = "block";
+            loadConnectedPlatforms();
+          } catch (err) {
+            showEmbeddedSignupError("تعذر الاتصال بالخادم.");
+          }
+        },
+        {
+          config_id: configId,
+          response_type: "code",
+          override_default_response_type: true,
+          extras: { sessionInfoVersion: "3" },
+        }
+      );
+    }
 
     const translations = {
       ar: {
