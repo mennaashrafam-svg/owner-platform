@@ -179,42 +179,49 @@
         return;
       }
 
+      // الـ Facebook SDK بيرفض إن الـ callback بتاعه يكون async function مباشرة
+      // ("Expression is of type asyncfunction, not function")، فبنعمل callback
+      // عادي وجوّاه بس بننادي على دالة async منفصلة.
+      async function handleEmbeddedSignupResponse(response) {
+        const code = response?.authResponse?.code;
+        if (!code) {
+          showEmbeddedSignupError("لم تتم الموافقة على الربط.");
+          return;
+        }
+        if (!embeddedSignupSessionData?.waba_id || !embeddedSignupSessionData?.phone_number_id) {
+          showEmbeddedSignupError("تعذر الحصول على بيانات حساب واتساب، جربي تاني.");
+          return;
+        }
+
+        try {
+          const res = await fetch(`${API}/api/whatsapp/embedded-signup/callback`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              code,
+              wabaId: embeddedSignupSessionData.waba_id,
+              phoneNumberId: embeddedSignupSessionData.phone_number_id,
+            }),
+          });
+          const body = await res.json().catch(() => ({}));
+          if (!res.ok) {
+            showEmbeddedSignupError(body.message || "فشل الربط، جربي تاني.");
+            return;
+          }
+          document.getElementById("wa-success").style.display = "block";
+          loadConnectedPlatforms();
+        } catch (err) {
+          showEmbeddedSignupError("تعذر الاتصال بالخادم.");
+        }
+      }
+
       embeddedSignupSessionData = null;
       FB.login(
-        async (response) => {
-          const code = response?.authResponse?.code;
-          if (!code) {
-            showEmbeddedSignupError("لم تتم الموافقة على الربط.");
-            return;
-          }
-          if (!embeddedSignupSessionData?.waba_id || !embeddedSignupSessionData?.phone_number_id) {
-            showEmbeddedSignupError("تعذر الحصول على بيانات حساب واتساب، جربي تاني.");
-            return;
-          }
-
-          try {
-            const res = await fetch(`${API}/api/whatsapp/embedded-signup/callback`, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-              },
-              body: JSON.stringify({
-                code,
-                wabaId: embeddedSignupSessionData.waba_id,
-                phoneNumberId: embeddedSignupSessionData.phone_number_id,
-              }),
-            });
-            const body = await res.json().catch(() => ({}));
-            if (!res.ok) {
-              showEmbeddedSignupError(body.message || "فشل الربط، جربي تاني.");
-              return;
-            }
-            document.getElementById("wa-success").style.display = "block";
-            loadConnectedPlatforms();
-          } catch (err) {
-            showEmbeddedSignupError("تعذر الاتصال بالخادم.");
-          }
+        function (response) {
+          handleEmbeddedSignupResponse(response);
         },
         {
           config_id: configId,
