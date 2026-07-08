@@ -8,4 +8,4 @@ window.OWNER_PLATFORM_META_APP_ID = "1311739350941433";
 // Configuration ID بتاع WhatsApp Embedded Signup، بيتولد من Meta Dashboard تحت
 // Facebook Login for Business > Configurations. لسه ناقص — لازم يتحط هنا بعد
 // ما تتعمل الخطوة دي على Meta (شوف MIGRATIONS.md أو اسألي Claude لو نسيتي التفاصيل).
-window.OWNER_PLATFORM_WHATSAPP_SIGNUP_CONFIG_ID = "";
+window.OWNER_PLATFORM_WHATSAPP_SIGNUP_CONFIG_ID = "1753968312650368";
