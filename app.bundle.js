@@ -1793,7 +1793,7 @@ function renderConversationDetail() {
     <div class="detail-header">
       <div>
         <p class="eyebrow">${text("analysis.score")}</p>
-        <h3>${local(conversation.patient)} · ${local(conversation.procedure)}</h3>
+        <h3>${escapeHtml(local(conversation.patient))} · ${local(conversation.procedure)}</h3>
         <p class="detail-kicker">${text("labels.channel")}: ${local(conversation.channel)} · ${text("labels.value")}: ${conversation.value}</p>
       </div>
       <div class="score-ring" style="--score: ${calculateConversationScore(conversation)}%">
@@ -1813,7 +1813,7 @@ function renderConversationDetail() {
     <div class="summary-grid">
       <section>
         <p class="eyebrow">${text("analysis.summary")}</p>
-        <p class="summary-copy">${local(conversation.summary)}</p>
+        <p class="summary-copy">${escapeHtml(local(conversation.summary))}</p>
       </section>
       <section>
         <p class="eyebrow">${text("analysis.recommendations")}</p>
@@ -1830,14 +1830,15 @@ function renderConversationDetail() {
           .map(
             ([speaker, line]) => `
               <div class="transcript-line">
-                <strong>${speaker}</strong>
-                <p>${line}</p>
+                <strong>${escapeHtml(speaker)}</strong>
+                <p>${escapeHtml(line)}</p>
               </div>
             `,
           )
           .join("")}
       </div>
     </section>
+    ${renderReplyBox({ waId: conversation.waId, realId: conversation.realId })}
   `;
 }
 
@@ -2292,6 +2293,8 @@ function mapRealConversationToAnalysisRecord(conv) {
       en: [["Client", message]],
       ar: [["العميل", message]],
     },
+    waId: booking.waId,
+    realId: booking.realId,
   };
 }
 
