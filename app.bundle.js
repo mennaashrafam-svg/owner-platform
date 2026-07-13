@@ -1799,6 +1799,7 @@ function renderConversationDetail() {
       <div class="score-ring" style="--score: ${calculateConversationScore(conversation)}%">
         <strong>${calculateConversationScore(conversation)}</strong>
       </div>
+      ${conversation.realId != null ? `<button class="text-button" type="button" data-delete-conversation-id="${escapeHtml(String(conversation.realId))}">${text("analysis.deleteConversation")}</button>` : ""}
     </div>
 
     <div class="signal-grid">
@@ -1955,6 +1956,11 @@ document.addEventListener("click", (event) => {
   if (replySendButton) {
     const replyBox = replySendButton.closest("[data-reply-conversation-id]");
     if (replyBox) sendConversationReply(replyBox);
+  }
+
+  const deleteConversationButton = event.target.closest("[data-delete-conversation-id]");
+  if (deleteConversationButton) {
+    deleteConversation(deleteConversationButton.dataset.deleteConversationId);
   }
 
   const fileAnalysisButton = event.target.closest("[data-file-analysis-type]");
@@ -2371,6 +2377,38 @@ async function loadRealConversations() {
     console.error("خطأ في جلب البيانات:", err);
   }
 }
+
+// بتمسح محادثة عميل نهائيًا بناءً على طلب صاحبة المنصة، من الداشبورد مباشرة
+async function deleteConversation(conversationId) {
+  if (window.confirm && !window.confirm(text("analysis.deleteConfirm"))) return;
+
+  const token = localStorage.getItem("token");
+  if (!token) {
+    window.location.replace("login.html");
+    return;
+  }
+
+  try {
+    const deleteRes = await fetch(`${API_BASE_URL}/api/conversations/${conversationId}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!deleteRes.ok) return;
+
+    // بنجيب القائمة تاني بعد الحذف مباشرة (بدل loadRealConversations اللي بتتجاهل
+    // القوائم الفاضية، وده هنا معناه حقيقي إن آخر محادثة اتمسحت مش إن لسه معندناش بيانات)
+    const res = await fetch(`${API_BASE_URL}/api/conversations`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) return;
+    const conversations = await res.json();
+    if (!Array.isArray(conversations)) return;
+    const merged = mergeRealConversationsIntoDashboard(conversations);
+    await replacePlatformData(merged);
+  } catch (err) {
+    console.error("خطأ أثناء حذف المحادثة:", err);
+  }
+}
 // بتبعت الرد فعليًا عن طريق السيرفر (اللي بيبعته بعدين لواتساب الحقيقي)، وبعد
 // النجاح بتضيف الرسالة لنفس المحادثة المفتوحة محليًا (optimistic update) عشان
 // المستخدم يشوفها فورًا من غير ما يستنى إعادة تحميل كاملة للبيانات.
@@ -2566,6 +2604,8 @@ const translations = exports.translations = {
     "analysis.bookingAttempt": "Booking attempt",
     "analysis.missedOpportunity": "Missed opportunity",
     "analysis.sentiment": "Customer sentiment",
+    "analysis.deleteConversation": "Delete conversation",
+    "analysis.deleteConfirm": "Permanently delete this conversation?",
     "analysis.summary": "Platform summary",
     "analysis.recommendations": "Recommendations",
     "analysis.transcript": "Conversation signals",
@@ -2903,6 +2943,8 @@ const translations = exports.translations = {
     "analysis.bookingAttempt": "محاولة حجز",
     "analysis.missedOpportunity": "فرصة ضائعة",
     "analysis.sentiment": "انطباع العميل",
+    "analysis.deleteConversation": "حذف المحادثة",
+    "analysis.deleteConfirm": "هل تريدين حذف هذه المحادثة نهائيًا؟",
     "analysis.summary": "ملخص المنصة",
     "analysis.recommendations": "التوصيات",
     "analysis.transcript": "إشارات المحادثة",
