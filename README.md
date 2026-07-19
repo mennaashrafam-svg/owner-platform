@@ -1,51 +1,63 @@
 # Owner Platform by Smart INV
 
-A lean static MVP for an AI-powered business conversation intelligence dashboard.
+A business conversation intelligence dashboard: real customer conversations (currently WhatsApp,
+via a Meta webhook) flow into a scored dashboard, and the owner can reply from inside the platform.
+Static HTML/CSS/JS frontend, backed by a real Express/PostgreSQL API in
+[`my-server`](https://github.com/mennaashrafam-svg/my-server).
+
+For the full functional picture, read [OWNER_PLATFORM_BUSINESS_GUIDE.md](./OWNER_PLATFORM_BUSINESS_GUIDE.md)
+(what it does, for whom) and [OWNER_PLATFORM_MASTER_HANDOVER.md](./OWNER_PLATFORM_MASTER_HANDOVER.md)
+(architecture, current gaps, roadmap).
 
 ## Structure
 
-- `index.html` - app shell for dashboard, conversation analysis, settings, and drill-down modal.
-- `styles.css` - visual system and responsive layout only. Business logic should not live here.
-- `app.js` - UI orchestration: view switching, event handlers, rendering flow, and calls into domain modules.
-- `i18n/translations.js` - bilingual English/Arabic copy.
-- `data/` - internal mock data and models: conversations, bookings, platforms, agents, search terms, alerts/settings data.
-- `analysis/` - AI/reporting domain logic: scoring, booking/missed detection, agent detection, platform/agent performance, alert building.
-- `analysis/fileParser.js` - full-file validation parser for TXT/CSV conversation exports used by Analyze File.
-- `search/` - language-independent search, Arabic normalization, snippets, and context-preserving result helpers.
-- `settings/` - isolated app/settings state such as language, theme, date range, and drill-down state.
-- `ui/` - small reusable HTML component helpers for cards, fields, badges, settings sections, and stats.
-- `integrations/` - placeholder platform adapters for WhatsApp, Instagram, Facebook, TikTok, Google, and Snapchat.
+- `index.html`, `login.html`, `register.html`, `forgot-password.html`, `reset-password.html`,
+  `employees.html`, `settings-connect.html` — the app's pages. `config.js` is the single source of
+  truth for the backend API URL and Meta App ID, loaded by all of them.
+- `app.js` — UI orchestration: view switching, event handlers, rendering, and real-data fetch/merge
+  (`loadRealConversations`, `mergeRealConversationsIntoDashboard`) into the same rendering engine
+  mock data used. `app.bundle.js` is generated from it — **never edit the bundle directly** (a
+  pre-commit hook and CI both rebuild it from source and will catch a hand-edited bundle).
+- `styles.css` — visual system and layout only.
+- `i18n/translations.js` — bilingual English/Arabic copy.
+- `data/` — mock data/models (`mockData.js`, `models.js`) plus real app state helpers
+  (`dataService.js`, `agents.js`, `searchData.js`, `settingsData.js`).
+- `analysis/` — scoring, booking/missed detection, agent detection, alert building, and the
+  Analyze File parser (`fileParser.js`, `fileReader.js`). `reports.js` is currently unreferenced
+  dead code (orphaned after mock data was removed) — a candidate for deletion.
+- `search/` — bilingual search and Arabic normalization.
+- `settings/` — app state (language, theme, date range, drill-down state).
+- `ui/` — reusable HTML component helpers, including `escapeHtml` (used everywhere untrusted text,
+  like real customer messages, gets rendered).
+- `integrations/*Adapter.js` — placeholder adapters for Facebook/Instagram/TikTok/Google/Snapchat.
+  Not connected to anything yet; only WhatsApp has a real end-to-end integration, and that lives in
+  `my-server`'s webhook, not here.
+- `scripts/build-bundle.mjs` — the custom bundler that produces `app.bundle.js`.
+  `scripts/validate-file-parser.mjs` — fixture validation for the Analyze File parser.
 
 ## Run
 
-Open `index.html` through a local static server. No build step or package install is required.
+Open `index.html` through a local static server (not `file://` — real API calls and Facebook's
+JS SDK require a real HTTP(S) origin). Set `window.OWNER_PLATFORM_API_BASE_URL` in `config.js` to
+point at a running `my-server` instance.
 
-Validate the Analyze File parser with:
+Rebuild the bundle after changing `app.js` or anything it imports:
+
+```sh
+node scripts/build-bundle.mjs
+```
+
+Validate the Analyze File parser:
 
 ```sh
 node scripts/validate-file-parser.mjs
 ```
 
-## MVP Scope
+## Current status (high level)
 
-- Dashboard homepage
-- Conversation analysis page
-- Arabic and English language switching
-- Every KPI opens layered intelligence: platform, source, campaign/content, booking, and conversation report
-- Global date range filter for dashboard intelligence
-- Google and Snapchat lead intelligence structures
-- Right-side platform intelligence navigation
-- AI conversation scoring
-- Booking attempt detection
-- Missed opportunity detection
-- AI summaries and recommendations
-
-## Developer Notes
-
-- Add or update mock platform data in `data/mockData.js`; keep platform-specific API shapes out of the UI.
-- Add future raw API normalization in `integrations/*Adapter.js`, then convert into the unified internal models described in `data/models.js`.
-- Change scoring, missed-opportunity, agent detection, or alert logic inside `analysis/`.
-- Change Arabic/English search behavior inside `search/`; UI code should call search helpers instead of rebuilding haystacks.
-- Change settings defaults/state in `data/settingsData.js` and `settings/settingsState.js`.
-- Future visual redesigns should touch `styles.css`, `index.html`, and `ui/` helpers without changing data, search, analysis, or integrations.
-- Use Analyze File as the isolated validation environment before connecting live platform adapters. Its parsed evidence never enters live dashboard data.
+- Real auth, real conversations, real WhatsApp webhook, and a reply-from-platform feature exist
+  and have been tested against a real phone number.
+- WhatsApp is not connected as of this writing (deliberately disconnected mid-experiment — see
+  `OWNER_PLATFORM_MASTER_HANDOVER.md` and the project's session memory for why and what's next).
+- Facebook/Instagram/TikTok/Google/Snapchat are not connected yet.
+- No per-employee login/access control yet — single owner account per business.

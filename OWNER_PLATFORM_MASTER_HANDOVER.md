@@ -3,9 +3,20 @@
 # Master Technical Handover
 
 Document status: Current repository handover  
-Repository state reviewed: July 5, 2026  
-Project stage: Early production system (real auth, backend, and one live integration) with some analytics still prototype-level  
+Repository state reviewed: July 10, 2026  
+Project stage: Early production system (real auth, backend, and a proven-working live WhatsApp integration — currently disconnected mid-experiment, see below) with some analytics still prototype-level  
 Production readiness: Not fully production-ready — see "Still Not Started" further down for the concrete remaining gaps
+
+**Current WhatsApp status (important):** the platform's real WhatsApp connection was fully built,
+verified, and confirmed working end-to-end (a real customer message was received and a real
+reply was sent successfully) on 2026-07-10. It was then **deliberately disconnected** to attempt
+Meta's "Coexistence" feature (using the WhatsApp Business app and the platform simultaneously on
+the same number, per a client requirement that the number not be exclusively locked to the API).
+That attempt hit an unresolved WhatsApp-app registration error and was abandoned for now — **no
+WhatsApp number is currently connected.** Everything needed to reconnect the old way (pure Cloud
+API, app-free) is documented and known-working; Coexistence needs more uninterrupted time to
+debug properly. See the project's session memory / `reference-whatsapp-business-onboarding` notes
+for the full troubleshooting log if picking this back up.
 
 ## Executive Summary
 
@@ -33,9 +44,9 @@ Current maturity level:
 - Evidence drill-down: Implemented for most core journeys, working against real conversation data.
 - File parser validation: Implemented with automated fixtures.
 - Live analytics accuracy: Business-outcome classification (booking/CNC/missed) is still score-derived rather than evidence-explicit; employee attribution and revenue extraction for real conversations are not implemented yet (deliberately deferred pending real usage data).
-- Integrations and persistence: WhatsApp/Instagram are real; Facebook/TikTok/Google/Snapchat remain architectural placeholders. Team members and platform connections persist in Postgres.
-- Security and privacy enforcement: Real password hashing, signed sessions, and webhook signature verification exist. Customer-data masking/reveal-logging, encryption at rest, and per-employee access control are still demonstration-only or not started.
-- Production operations: Automated tests (35, backend), CI (both repos), structured logging, a `/health` endpoint, and versioned database migrations are in place. No production monitoring/alerting service, no browser/e2e test suite, and no formal compliance audit yet.
+- Integrations and persistence: WhatsApp has a real, proven-working integration (webhook receive + in-platform reply), but is currently disconnected (see above). Instagram's webhook code exists but has never been tested against a real connected account. Facebook/TikTok/Google/Snapchat remain architectural placeholders — TikTok specifically is blocked on the business having no official registration document (tax card, commercial registry, etc.) to satisfy TikTok's required "Company certification"; Snapchat requires direct outreach to Snap for API access, not yet started. Team members and platform connections persist in Postgres, and that schema already supports true multi-tenancy (each connection is scoped by `user_id`, and the webhook resolves the right owner from the incoming account ID) — what's missing is a smooth self-serve "client connects their own account" UX for anything beyond WhatsApp's Embedded Signup (which itself is built and verified working, but blocked on Meta Business Verification before it can onboard a real external client).
+- Security and privacy enforcement: Real password hashing, signed sessions, webhook signature verification, and Postgres-backed rate limiting exist. Two separate XSS gaps in real-customer-data rendering (Bookings view and Conversation Analysis view) have been found and fixed. Customer-data masking/reveal-logging, encryption at rest, and per-employee access control are still demonstration-only or not started. The owner can now permanently delete a conversation from the dashboard (`DELETE /api/conversations/:id`); there is still no automated/scheduled data-retention policy.
+- Production operations: Automated tests (48, backend), CI (both repos), structured logging, a `/health` endpoint, and versioned database migrations are in place. No production monitoring/alerting service, no browser/e2e test suite, and no formal compliance audit yet.
 
 ## Project Vision
 
@@ -170,22 +181,29 @@ The future integration flow is only architectural intent for those four platform
 
 ```text
 /
-|-- index.html
+|-- index.html, login.html, register.html, forgot-password.html, reset-password.html
+|-- employees.html, settings-connect.html
+|-- config.js
 |-- styles.css
 |-- app.js
 |-- app.bundle.js
 |-- README.md
 |-- OWNER_PLATFORM_MASTER_HANDOVER.md
 |-- OWNER_PLATFORM_BUSINESS_GUIDE.md
+|-- REPOSITORY_MAP.md
+|-- DEPENDENCIES.md
+|-- .github/workflows/ci.yml
 |-- analysis/
 |   |-- metrics.js
 |   |-- fileParser.js
-|   |-- reports.js
+|   |-- fileReader.js
+|   |-- reports.js (orphaned, unused — candidate for deletion)
 |   |-- alerts.js
 |   `-- agentDetection.js
 |-- data/
 |   |-- mockData.js
 |   |-- models.js
+|   |-- dataService.js
 |   |-- agents.js
 |   |-- searchData.js
 |   `-- settingsData.js
@@ -209,14 +227,13 @@ The future integration flow is only architectural intent for those four platform
 |   `-- snapchatAdapter.js
 |-- i18n/
 |   `-- translations.js
-|-- scripts/
-|   |-- build-bundle.mjs
-|   `-- validate-file-parser.mjs
-|-- assets/
-|   `-- clinic-command-center.png
-`-- *.png
-    Historical UI reference and preview screenshots.
+`-- scripts/
+    |-- build-bundle.mjs
+    `-- validate-file-parser.mjs
 ```
+
+Historical preview screenshots and OS metadata that used to sit at repository root have been
+removed (a `.gitignore` now keeps `__MACOSX/`, `.DS_Store`, etc. out going forward).
 
 ### Important Files
 
@@ -274,6 +291,9 @@ Automated parser validation for baseline, taxonomy, and real-world conversation 
 - In-memory audit logging when masked example data is revealed.
 - Generated standalone JavaScript bundle.
 - Automated parser validation script.
+- Real-time reply from the platform to a real WhatsApp conversation (verified end-to-end with a live number, currently disconnected — see the note at the top of this document).
+- Owner-initiated permanent deletion of a real conversation from the dashboard.
+- Self-serve WhatsApp account connection (Embedded Signup) for future clients, built and verified working up to Meta's Business Verification gate.
 
 ### Demonstration or Mock Behavior
 
@@ -892,20 +912,34 @@ A production implementation should:
 - Persistent team members and platform connections (not yet: most other settings, audit logs).
 - Basic real-time health monitoring (`GET /health`) and structured JSON logging (not yet: alerting/notifications).
 - Deployment pipeline basics: CI on both repos (syntax checks, automated tests, bundle-freshness check).
-- Automated test suite for the backend (35 tests via `node:test`) — not yet a browser/end-to-end suite for the frontend.
+- Automated test suite for the backend (48 tests via `node:test`) — not yet a browser/end-to-end suite for the frontend.
 - Versioned database migrations (`node-pg-migrate`), verified against production.
+- **Reply-from-the-platform**: `POST /api/conversations/:id/reply` sends a real WhatsApp message via the Graph API and logs it as a conversation row; a reply box appears on real WhatsApp conversations in both the Bookings and Conversation Analysis views.
+- **Delete-conversation**: `DELETE /api/conversations/:id` lets the owner permanently remove a customer conversation from the dashboard (owner-initiated only, no scheduled/automatic deletion).
+- **WhatsApp Embedded Signup** (self-serve "client connects their own WhatsApp account" OAuth flow, replacing the old raw-token-paste-only form as the primary path): fully built and verified working end-to-end up to the point Meta's own Business Verification gate stops it — see the disconnected-WhatsApp note at the top of this document.
+- A real WhatsApp number was fully verified, registered for the Cloud API, and confirmed working end-to-end (real receive + real reply) before being deliberately disconnected to attempt Coexistence (see top of document).
+- Found and fixed a second XSS gap (Conversation Analysis view's customer name/message rendering), in addition to the one already fixed in the Bookings view.
 
 ### Still Not Started
 
-- Real platform API integrations for Facebook, TikTok, Google, Snapchat.
+- Real platform API integrations for Facebook, TikTok, Google, Snapchat. Google Business Messages (real-time chat) is dead — Google shut it down in 2024, dropped from scope entirely. TikTok is blocked on the business having an official registration document. Snapchat needs direct outreach to Snap for API access.
+- A working WhatsApp connection (see the disconnected-WhatsApp note at the top — was working, is not right now).
+- A self-serve "connect your own account" flow for anything other than WhatsApp (which has Embedded Signup, itself blocked on Meta Business Verification). Facebook/Instagram still only support the manual token-paste form.
 - Per-employee staff login and access control (only the business owner account can log in today).
 - Real response-time measurement (employee metrics are still score-derived proxies).
 - Real confirmed revenue connections (and revenue extraction/employee attribution for real WhatsApp/Instagram conversations specifically — deferred on purpose until real customer usage data exists).
 - Production AI or machine-learning analysis service (classification is still rule-based).
-- Multi-tenant architecture (single business owner model).
+- A refresh mechanism for the 60-day WhatsApp Embedded Signup system-user tokens (tracked as an open task; not urgent since no client has connected through it yet).
+- A data retention/deletion policy (the owner can now manually delete a conversation, but there's no automatic retention rule).
 - Full observability (dashboards/alerting beyond the basic health endpoint and JSON logs).
-- Automated browser/end-to-end test suite for the frontend.
+- Automated browser/end-to-end test suite for the frontend, and route-level integration tests for the backend (register/login/reply/delete are only tested at the pure-logic/lib level, not as full HTTP routes against a real database).
 - Formal accessibility, security, privacy, and compliance audits.
+
+**Note on multi-tenancy:** the database schema and webhook routing already support true
+multi-tenancy today (each `platform_connections` row is scoped to a `user_id`, and inbound
+webhook events resolve the correct owner from the account ID they arrived on) — this isn't a
+"single business owner model" limitation at the data layer. What's still missing is a smooth,
+non-technical connection experience for every platform except WhatsApp.
 
 ## Known Issues
 

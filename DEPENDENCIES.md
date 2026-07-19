@@ -24,9 +24,12 @@ The application uses:
 
 ## External Libraries
 
-None.
+One: the **Facebook JavaScript SDK** (`https://connect.facebook.net/en_US/sdk.js`), loaded only
+by `settings-connect.html` to power the "Connect via Facebook" (WhatsApp Embedded Signup) button.
+Loaded directly via `<script>` tag, not npm — no build step involved.
 
-There is no `package.json`, npm dependency, CDN script, frontend framework, charting library, or backend framework.
+Otherwise: no `package.json`, npm dependency, frontend framework, charting library, or backend
+framework.
 
 ## Build Requirements
 
@@ -77,7 +80,9 @@ Font files are not bundled. Rendering depends on fonts available in the host env
 - The backend (`my-server`) is a required external service now, not optional. The frontend
   reads its URL from `config.js` (`window.OWNER_PLATFORM_API_BASE_URL`).
 - WhatsApp and Instagram connect through a real, signature-verified Meta webhook (handled by
-  the backend).
+  the backend). WhatsApp is currently disconnected (deliberately, mid-experiment with Meta's
+  "Coexistence" feature) after previously working end-to-end; Instagram's webhook code exists
+  but has never been tested against a real connected account.
 - Resend is used by the backend for password-reset emails.
 
 The following are still planned but not connected:

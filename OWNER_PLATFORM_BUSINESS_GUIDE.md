@@ -3,8 +3,8 @@
 # Business Guide
 
 Document status: Current product guide  
-Repository state reviewed: July 4, 2026  
-Current stage: Early production system. Authentication, the database, and a real WhatsApp/Instagram webhook integration are live. Some analytics (employee attribution, revenue extraction, and multi-message conversation grouping for real conversations) are still placeholders pending real customer usage data.
+Repository state reviewed: July 10, 2026  
+Current stage: Early production system. Authentication and the database are live and proven. The real WhatsApp integration (including in-platform reply) was built, tested, and confirmed working end-to-end with a real customer conversation — it is **currently disconnected** while attempting Meta's "Coexistence" feature (see "Current Product Status" below for why and what's next). Some analytics (employee attribution, revenue extraction, and multi-message conversation grouping for real conversations) are still placeholders pending real customer usage data.
 
 ## What Is Owner Platform?
 
@@ -26,7 +26,7 @@ The platform is built around a simple idea:
 
 An owner should not have to trust a number without understanding where it came from.
 
-The current product has moved beyond pure demonstration. WhatsApp and Instagram messages are received through a real, signature-verified webhook connection and appear on the live dashboard. Facebook, TikTok, Google, Snapchat, payment, and CRM connections are not yet active. Employee attribution, revenue extraction, and grouping multiple messages into one evolving conversation are still placeholders for real conversations, pending real customer usage data to inform the design.
+The current product has moved beyond pure demonstration. WhatsApp messages were received through a real, signature-verified webhook connection and appeared on the live dashboard, and the owner could reply from inside the platform — all confirmed working with a real customer and a real phone number. WhatsApp is currently disconnected while the team attempts a feature that would let a client use their normal WhatsApp Business app and the platform at the same time (see "Current Product Status"). Instagram's webhook code exists but has not been tested with a real account. Facebook, TikTok, Google, Snapchat, payment, and CRM connections are not yet active. Employee attribution, revenue extraction, and grouping multiple messages into one evolving conversation are still placeholders for real conversations, pending real customer usage data to inform the design.
 
 ## Why Was It Created?
 
@@ -422,10 +422,13 @@ The platform should explain the business without forcing the owner to study a co
 ### Implemented Today
 
 - Real owner account authentication (register, login, password reset by email).
-- Real WhatsApp and Instagram webhook connection, verified against Meta's signature, storing real customer conversations in a persistent database.
-- Real-time dashboard population from those live conversations (KPIs, Business Health, Platform Performance, Risk Center, and drill-downs all reflect real data once it arrives).
+- A real WhatsApp webhook connection, verified against Meta's signature, storing real customer conversations in a persistent database — **currently disconnected** (see status note at the top of this document; it was fully working, including a real reply reaching a real customer, before being deliberately taken offline to attempt Meta's "Coexistence" feature).
+- **Reply from inside the platform**: the owner can type a reply to a real WhatsApp conversation and it's sent as a real WhatsApp message — verified with a live phone number.
+- **Delete a conversation**: the owner can permanently remove a customer conversation from the dashboard.
+- **Self-serve WhatsApp connection (Embedded Signup)**: a client can click "Connect via Facebook" and authorize their own WhatsApp account without ever handling a raw access token — built and verified working, currently blocked on Meta's Business Verification requirement before it can onboard a real external client (a business-process step, not an engineering gap).
+- Real-time dashboard population from live conversations (KPIs, Business Health, Platform Performance, Risk Center, and drill-downs all reflect real data once it arrives).
 - Real, persistent team management (add/remove employees) and platform connection settings.
-- Six platform intelligence structures (four currently reachable by real data: WhatsApp, Instagram, Facebook, TikTok; Google and Snapchat remain placeholders).
+- Six platform intelligence structures — only WhatsApp has ever had a real, tested connection; Instagram's webhook code exists but has never been tested against a real connected account; Facebook, TikTok, Google, and Snapchat remain placeholders.
 - Date filtering.
 - Bilingual English and Arabic interface.
 - RTL Arabic mode.
@@ -435,6 +438,7 @@ The platform should explain the business without forcing the owner to study a co
 - Conversation reports and full conversation view.
 - Analyze File text, CSV, real PDF/DOCX (via browser decompression), and ZIP validation.
 - Privacy masking demonstration.
+- Automated backend test suite (48 tests) and CI on both repositories (syntax checks, tests, and a bundle-freshness check that catches hand-edited bundles).
 
 ### Partially Implemented
 
@@ -443,22 +447,26 @@ The platform should explain the business without forcing the owner to study a co
 - Risk analysis.
 - Privacy Center.
 - Settings (most toggles outside team/platform connections are still session-only).
-- Platform connections (WhatsApp/Instagram receive real data; Facebook, TikTok, Google, Snapchat are placeholders).
+- Platform connections: WhatsApp's self-serve Embedded Signup flow is built but blocked on Meta Business Verification; Instagram/Facebook only support the manual token-paste form; TikTok, Google, and Snapchat are placeholders.
 
 These areas now run on a real backend but still require stronger data, measurement, or additional integrations.
 
 ### Planned, Not Yet Implemented
 
-- Real Facebook, TikTok, Google, and Snapchat connections (WhatsApp and Instagram are already real).
+- Reconnecting WhatsApp (see status note at top) — either back to the previously-working pure Cloud API setup, or successfully onto Meta's "Coexistence" feature (app + API on the same number simultaneously, currently blocked on an unresolved WhatsApp-app registration error).
+- Real Facebook, Google connections — Google Business Messages (real-time chat) was discontinued by Google itself in 2024 and isn't achievable at all; Google as a lead source would need a different mechanism (e.g. ad lead forms) if pursued.
+- Real TikTok connection — blocked until the business has an official registration document (tax card, commercial registry, etc.) TikTok will accept for "Company certification."
+- Real Snapchat connection — requires direct outreach to Snap for API access (gated behind an allowlist), not yet started.
+- Meta Business Verification + App Review for WhatsApp Embedded Signup, so real clients (not just the platform's own number) can self-connect their WhatsApp accounts — deferred until a real client is ready to onboard.
 - Real CRM, invoice, accounting, and payment connections.
 - Confirmed collected revenue.
 - Real-time notifications.
 - Per-employee staff login and access control (the current authentication is for the business owner account only).
 - Persistent audit logs.
 - Production privacy and encryption.
-- Live multi-business deployment.
+- Live multi-business deployment (the database already supports it structurally — see the multi-tenancy note in `OWNER_PLATFORM_MASTER_HANDOVER.md` — but a smooth self-serve onboarding experience doesn't exist for every platform yet).
 - Production-grade intelligent analysis.
-- Automated test coverage, CI, and production monitoring.
+- Production monitoring/alerting and a browser/end-to-end test suite (backend unit tests and CI already exist).
 
 ## Future Vision
 
@@ -486,7 +494,7 @@ No. It is designed as an owner-focused conversation intelligence platform. It ma
 
 ### Does the platform connect to real social media accounts today?
 
-Partially. WhatsApp and Instagram connect through a real, signature-verified Meta webhook, and real messages appear on the dashboard. Facebook, TikTok, Google, and Snapchat remain placeholder connection cards.
+Partially, and not right now for WhatsApp specifically. WhatsApp connects through a real, signature-verified Meta webhook and has been proven working end-to-end (real message in, real reply out) — but it's currently disconnected while the team works out how to let a client keep using their normal WhatsApp Business app at the same time. Instagram's webhook code exists but has never been tested with a real account. Facebook, TikTok, Google, and Snapchat remain placeholder connection cards, each blocked on a different real-world requirement (see "Planned, Not Yet Implemented" above) rather than missing code.
 
 ### Is the revenue number confirmed money received?
 
@@ -514,7 +522,7 @@ Yes. PDF and DOCX text is genuinely extracted (including compressed content) usi
 
 ### Is customer data secure?
 
-Real account authentication (password hashing, signed session tokens) and a signature-verified webhook are implemented. Customer-data masking and reveal logging are still demonstration-only, and there is no encryption at rest, per-employee access control, or persistent audit log yet.
+Real account authentication (password hashing, signed session tokens), a signature-verified webhook, and brute-force rate limiting are implemented. Two real XSS (cross-site scripting) gaps in how customer-provided text was rendered were found and fixed during development. The owner can now permanently delete a conversation, though there's no automatic data-retention policy yet. Customer-data masking and reveal logging are still demonstration-only, and there is no encryption at rest, per-employee access control, or persistent audit log yet.
 
 ### Can settings be saved?
 
@@ -526,7 +534,7 @@ The current repository mainly uses structured mock reports, deterministic calcul
 
 ### Is the platform ready for production?
 
-Closer than before, but not fully. Real authentication, a real database, and a real WhatsApp/Instagram integration exist. It is not yet ready for full production reliance: there is no automated test suite, no CI pipeline, and no production monitoring, and some real-conversation analytics (employee attribution, revenue extraction, multi-message conversation grouping) are still placeholders.
+Closer than before, but not fully. Real authentication, a real database, an automated backend test suite (48 tests) with CI on both repositories, and a real WhatsApp integration all exist and have been proven working — but WhatsApp is currently disconnected (see above), there's no production monitoring/alerting, no browser/end-to-end test suite, and some real-conversation analytics (employee attribution, revenue extraction, multi-message conversation grouping) are still placeholders.
 
 ## Investor Overview
 
@@ -569,7 +577,7 @@ The platform's intended differentiators are:
 
 ### Current Investment Stage
 
-The repository has moved from a static MVP to an early production system: it has persistent infrastructure (a PostgreSQL database behind an Express backend), real owner authentication, and one live, signature-verified integration (WhatsApp and Instagram via a Meta webhook). It does not yet have automated testing, CI, production monitoring, or live paying customers represented in the codebase.
+The repository has moved from a static MVP to an early production system: it has persistent infrastructure (a PostgreSQL database behind an Express backend), real owner authentication, automated testing (48 tests) with CI on both repositories, and a signature-verified WhatsApp integration proven working end-to-end (real receive + real in-platform reply) — currently disconnected while the team works out a client requirement (using WhatsApp's own app and the platform simultaneously on one number). It does not yet have production monitoring or live paying customers represented in the codebase.
 
 ### Future Opportunities
 
@@ -583,4 +591,4 @@ The repository has moved from a static MVP to an early production system: it has
 
 ### Key Execution Requirement
 
-The most important next step is not adding more interface features. One real, signature-verified integration (WhatsApp/Instagram) now exists end-to-end from conversation to dashboard. What remains is proving trustworthy analytics on top of it: real employee attribution, real revenue extraction, evidence-first conversation grouping, automated testing, and production monitoring.
+The most important next step is not adding more interface features. One real, signature-verified integration (WhatsApp) has already been proven end-to-end from conversation to dashboard to reply — the immediate priority is reconnecting it (either the previously-working setup or Meta's Coexistence feature) and getting Meta Business Verification done so real clients can self-connect their own accounts. Beyond that: real employee attribution, real revenue extraction, evidence-first conversation grouping, and production monitoring.
